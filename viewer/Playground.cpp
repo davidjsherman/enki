@@ -183,8 +183,8 @@ public:
 		#else // USE_SDL
 		addDefaultsRobots(world);
 		#endif // USE_SDL
-		altitude = 150;
-		pos = QPointF(0,60);
+		camera.altitude = 150;
+		camera.pos = QPointF(0,-60);
 	}
 	
 	void addDefaultsRobots(World *world)
@@ -257,10 +257,10 @@ public:
 		{
 			const EPuck* epuck = epucks[0];
 			Vector p(epuck->pos);
-			pos.setX(-p.x+cos(-yaw)*7);
-			pos.setY(-p.y+sin(-yaw)*7);
-			yaw = -epuck->angle;
-			altitude = 11;
+			camera.pos.setX(p.x+cos(camera.yaw)*7);
+			camera.pos.setY(p.y+sin(camera.yaw)*7);
+			camera.yaw = epuck->angle;
+			camera.altitude = 11;
 		}
 		#endif
 		QMap<PhysicalObject*, int>::iterator i = bullets.begin();
@@ -289,7 +289,7 @@ public:
 		{
 			subjectiveView = !subjectiveView;
 			if (subjectiveView)
-				pitch = M_PI/8;
+				camera.pitch = -M_PI/8;
 			event->accept();
 		}
 		else
