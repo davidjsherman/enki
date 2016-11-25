@@ -3,12 +3,12 @@
 pipeline {
 	agent label:""
 	stages {
-		stage("prepare") {
+		stage("Prepare") {
 			steps {
 				sh "mkdir -p _install _build"
 			}
 		}
-		stage("checkout") {
+		stage("Checkout") {
 			steps {
 				dir('enki') {
 					git branch: 'master', url: 'https://github.com/davidjsherman/enki.git'
@@ -16,7 +16,7 @@ pipeline {
 				stash excludes: '.git', name: 'source'
 			}
 		}
-		stage("compile") {
+		stage("Compile") {
 			steps {
 				unstash 'source'
 				CMake([buildType: 'Debug',
