@@ -11,7 +11,7 @@ pipeline {
 		stage("Checkout") {
 			steps {
 				dir('enki') {
-					git branch: 'master', url: 'https://github.com/davidjsherman/enki.git'
+					checkout scm
 				}
 				stash excludes: '.git', name: 'source'
 			}
