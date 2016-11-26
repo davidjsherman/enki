@@ -29,8 +29,8 @@ pipeline {
 			post {
 				always {
 					stash includes: 'dist/**', name: 'enki'
+					input "Proceed to packaging?"
 				}
-				input "Proceed to packaging?"
 			}
 		}
 		stage("Package") {
