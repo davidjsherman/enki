@@ -1,7 +1,7 @@
 #!groovy
 
-# Jenkinsfile for compiling, testing, and packaging the Enki libraries.
-# Requires CMake plugin from https://github.com/davidjsherman/aseba-jenkins.git global library
+// Jenkinsfile for compiling, testing, and packaging the Enki libraries.
+// Requires CMake plugin from https://github.com/davidjsherman/aseba-jenkins.git global library
 
 pipeline {
 	agent none
