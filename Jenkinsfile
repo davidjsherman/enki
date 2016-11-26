@@ -4,10 +4,9 @@
 // Requires CMake plugin from https://github.com/davidjsherman/aseba-jenkins.git global library
 
 pipeline {
-	agent none
+	agent label: ''
 	stages {
 		stage('Prepare') {
-			agent label: ''
 			steps {
 				sh 'mkdir -p build dist'
 				dir('enki') {
@@ -17,7 +16,6 @@ pipeline {
 			}
 		}
 		stage('Compile') {
-			agent label: ''
 			steps {
 				unstash 'source'
 				CMake([buildType: 'Debug',
