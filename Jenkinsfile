@@ -34,21 +34,18 @@ pipeline {
 			}
 		}
 		stage('Package') {
-			agent label: 'debian'
 			steps {
-				unstash 'source'
-				sh 'cd enki && debuild -i -us -uc -b'
-			}
-			post {
-				always {
-					sh 'mv libenki*.deb libenki*.changes libenki*.build dist/'
-				}
+				parallel (
+					"debian": {
+						node('ubuntu') {
+							unstash 'source'
+							sh 'cd enki && debuild -i -us -uc -b'
+							sh 'mv libenki*.deb libenki*.changes libenki*.build dist/'
+							archiveArtifacts artifacts: 'dist/**', fingerprint: true, onlyIfSuccessful: true
+						}
+					}
+				)
 			}
 		}
 	}
-	// post {
-	// 	always {
-	// 		archiveArtifacts artifacts: 'dist/**', fingerprint: true, onlyIfSuccessful: true
-	// 	}
-	// }
 }
