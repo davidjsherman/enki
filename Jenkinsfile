@@ -7,12 +7,9 @@ pipeline {
 	agent none
 	stages {
 		stage('Prepare') {
+			agent label: ''
 			steps {
 				sh 'mkdir -p build dist'
-			}
-		}
-		stage('Checkout') {
-			steps {
 				dir('enki') {
 					checkout scm
 				}
