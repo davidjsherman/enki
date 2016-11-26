@@ -34,8 +34,9 @@ pipeline {
 			}
 		}
 		stage('Package') {
+			agent label: ''
 			when {
-				SystemUtils.IS_OS_UNIX
+				sh(script:'which debuild', returnStatus: true) == 0
 			}
 			steps {
 				node('debian') {
