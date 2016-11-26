@@ -37,7 +37,7 @@ pipeline {
 			steps {
 				parallel (
 					"debian": {
-						node('ubuntu') {
+						node('missing') {
 							unstash 'source'
 							sh 'cd enki && debuild -i -us -uc -b'
 							sh 'mv libenki*.deb libenki*.changes libenki*.build dist/'
