@@ -13,7 +13,7 @@ pipeline {
 				dir('enki') {
 					checkout scm
 				}
-				stash includes: 'source/**', excludes: '.git', name: 'source'
+				stash includes: 'enki/**', excludes: '.git', name: 'source'
 			}
 		}
 		stage('Compile') {
