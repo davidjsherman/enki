@@ -5,7 +5,7 @@ pipeline {
 	stages {
 		stage("Prepare") {
 			steps {
-				sh "mkdir -p _install _build"
+				sh "mkdir -p build dist"
 			}
 		}
 		stage("Checkout") {
@@ -21,21 +21,33 @@ pipeline {
 				unstash 'source'
 				CMake([buildType: 'Debug',
 					   sourceDir: '$workDir/enki',
-					   buildDir: '$workDir/_build/enki',
-					   installDir: '$workDir/_install',
+					   buildDir: '$workDir/build/enki',
+					   installDir: '$workDir/dist',
 					   getCmakeArgs: [ '-DBUILD_SHARED_LIBS:BOOL=ON' ]
 					  ])
 			}
 			post {
 				always {
-					stash includes: '_install/**', name: 'enki'
+					stash includes: 'dist/**', name: 'enki'
+				}
+				input "Proceed to packaging?"
+			}
+		}
+		stage("Package") {
+			steps {
+				unstash 'source'
+				sh "cd enki && debuild -i -us -uc -b"
+			}
+			post {
+				always {
+					sh "mv enki*.deb dist/"
 				}
 			}
 		}
 	}
 	post {
 		always {
-			archiveArtifacts artifacts: '_install/**', fingerprint: true, onlyIfSuccessful: true
+			archiveArtifacts artifacts: 'dist/**', fingerprint: true, onlyIfSuccessful: true
 		}
 	}
 }
