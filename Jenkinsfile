@@ -32,8 +32,10 @@ pipeline {
 			}
 		}
 		stage('Test') {
-			dir('build/enki') {
-				sh 'ctest'
+			steps {
+				dir('build/enki') {
+					sh 'ctest'
+				}
 			}
 		}
 		stage('Package') {
