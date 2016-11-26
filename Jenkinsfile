@@ -34,19 +34,16 @@ pipeline {
 			}
 		}
 		stage('Package') {
+			when {
+				SystemUtils.IS_OS_UNIX
+			}
 			steps {
-				parallel (
-					"debian": {
-						timeout(time:30, unit:'SECONDS') {
-							node('missing') {
-								unstash 'source'
-								sh 'cd enki && debuild -i -us -uc -b'
-								sh 'mv libenki*.deb libenki*.changes libenki*.build dist/'
-								archiveArtifacts artifacts: 'dist/**', fingerprint: true, onlyIfSuccessful: true
-							}
-						}
-					}
-				)
+				node('debian') {
+					unstash 'source'
+					sh 'cd enki && debuild -i -us -uc -b'
+					sh 'mv libenki*.deb libenki*.changes libenki*.build dist/'
+					archiveArtifacts artifacts: 'dist/**', fingerprint: true, onlyIfSuccessful: true
+				}
 			}
 		}
 	}
