@@ -13,7 +13,7 @@ pipeline {
 				dir('enki') {
 					checkout scm
 				}
-				stash excludes: '.git', name: 'source'
+				stash includes: 'source/**', excludes: '.git', name: 'source'
 			}
 		}
 		stage('Compile') {
@@ -41,6 +41,7 @@ pipeline {
 			}
 			post {
 				always {
+					pwd
 					sh 'mv libenki*.{deb,changes,build} dist/'
 				}
 			}
