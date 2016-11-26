@@ -1,10 +1,10 @@
 #!groovy
 
 // Jenkinsfile for compiling, testing, and packaging the Enki libraries.
-// Requires CMake plugin from https://github.com/davidjsherman/aseba-jenkins.git global library
+// Requires CMake plugin from https://github.com/davidjsherman/aseba-jenkins.git in global library.
 
 pipeline {
-	agent label:''
+	agent label:'' // use any available Jenkins agent
 	stages {
 		stage('Prepare') {
 			steps {
@@ -31,6 +31,11 @@ pipeline {
 				}
 			}
 		}
+		stage('Test') {
+			dir('build/enki') {
+				sh 'ctest'
+			}
+		}
 		stage('Package') {
 			when {
 				sh(script:'which debuild', returnStatus: true) == 0
@@ -39,6 +44,10 @@ pipeline {
 				unstash 'source'
 				sh 'cd enki && debuild -i -us -uc -b'
 				sh 'mv libenki*.deb libenki*.changes libenki*.build dist/'
+			}
+		}
+		stage('Archive') {
+			steps {
 				archiveArtifacts artifacts: 'dist/**', fingerprint: true, onlyIfSuccessful: true
 			}
 		}
