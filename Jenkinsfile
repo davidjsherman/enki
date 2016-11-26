@@ -41,8 +41,7 @@ pipeline {
 			}
 			post {
 				always {
-					sh 'pwd'
-					sh 'mv libenki*.{deb,changes,build} dist/'
+					sh 'mv libenki*.deb libenki*.changes libenki*.build dist/'
 				}
 			}
 		}
