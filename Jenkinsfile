@@ -22,11 +22,12 @@ pipeline {
 							unstash 'source'
 							script {
 								env.debian_python = sh ( script: '''
-python -c "import sys; print 'lib/python'+str(sys.version_info[0])+'.'+str(sys.version_info[1])+'/dist-packages'"
+									python -c "import sys; print 'lib/python'+str(sys.version_info[0])+'.'+str(sys.version_info[1])+'/dist-packages'"
 ''', returnStdout: true).trim()
 							}
 							CMake([sourceDir: '$workDir/enki', label: 'debian', getCmakeArgs: "-DPYTHON_CUSTOM_TARGET:PATH=${env.debian_python}"])
 							stash includes: 'dist/**', name: 'dist-debian'
+							stash includes: 'build/**', name: 'build-debian'
 						}
 					},
 					"macos" : {
@@ -49,8 +50,8 @@ python -c "import sys; print 'lib/python'+str(sys.version_info[0])+'.'+str(sys.v
 		stage('Test') {
 			steps {
 				node('debian') {
-					unstash 'dist-debian'
-					dir('build/enki') {
+					unstash 'build-debian'
+					dir('build/debian') {
 						sh 'LANG=C ctest'
 					}
 				}
