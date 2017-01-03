@@ -15,6 +15,7 @@ endif (SDL_FOUND)
 set(QT_USE_QTOPENGL TRUE)
 find_package(Qt4)
 find_package(OpenGL)
+find_package(Threads)
 
 if (QT4_FOUND AND OPENGL_FOUND)
 	include(${QT_USE_FILE})
@@ -57,6 +58,15 @@ if (QT4_FOUND AND OPENGL_FOUND)
 	add_executable(enkiplayground ${viewer_test_SRCS})
 	
 	target_link_libraries(enkiplayground enkiviewer enki ${QT_LIBRARIES} ${OPENGL_LIBRARIES} ${EXTRA_LIBS})
+
+	add_executable(enkiplaygroundNetwork PlaygroundNetwork.cpp)
+	target_link_libraries(enkiplaygroundNetwork
+		enkiviewer
+		enki
+		${QT_LIBRARIES}
+		${OPENGL_LIBRARIES}
+		${dashel_LIBRARIES}
+		${CMAKE_THREAD_LIBS_INIT})
 
 	set(ENKI_VIEWER_HDR
 		Viewer.h
