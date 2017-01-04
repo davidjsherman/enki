@@ -10,3 +10,7 @@ add_subdirectory(enki)
 add_subdirectory(examples)
 add_subdirectory(viewer)
 add_subdirectory(python)
+
+# testing
+enable_testing()
+add_subdirectory(tests)
