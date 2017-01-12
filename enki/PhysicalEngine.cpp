@@ -399,9 +399,19 @@ namespace Enki
 		}
 		cm /= area;
 		
-		// shift all shapes to the CM
-		pos += Matrix22(angle) * cm;
-		hull.applyTransformation(Matrix22::identity(), -cm, &r);
+		// FIXME: this shift is really ugly. We can only do it for non-robots
+		// because otherwise the local interactions are missplaced.
+		Robot* robot(dynamic_cast<Robot*>(this));
+		if (!robot)
+		{
+			pos += Matrix22(angle) * cm;
+			hull.applyTransformation(Matrix22::identity(), -cm, &r);
+		}
+		else
+		{
+			// we need to compute radius
+			hull.applyTransformation(Matrix22::identity(), Vector(), &r);
+		}
 	}
 	
 	void PhysicalObject::computeTransformedShape()
@@ -690,8 +700,6 @@ namespace Enki
 		}
 	}
 	
-	static bool worldTakeObjectOwnership = true;
-	
 	World::GroundTexture::GroundTexture():
 		width(0),
 		height(0)
@@ -710,6 +718,7 @@ namespace Enki
 		r(0),
 		color(color),
 		groundTexture(groundTexture),
+		takeObjectOwnership(true),
 		bluetoothBase(NULL)
 	{
 	}
@@ -721,6 +730,7 @@ namespace Enki
 		r(r),
 		color(color),
 		groundTexture(groundTexture),
+		takeObjectOwnership(true),
 		bluetoothBase(NULL)
 	{
 	}
@@ -731,13 +741,14 @@ namespace Enki
 		h(0),
 		r(0),
 		color(Color::gray),
+		takeObjectOwnership(true),
 		bluetoothBase(NULL)
 	{
 	}
 
 	World::~World()
 	{
-		if (worldTakeObjectOwnership)
+		if (takeObjectOwnership)
 			for (ObjectsIterator i = objects.begin(); i != objects.end(); ++i)
 				delete (*i);
 		
@@ -1248,11 +1259,6 @@ namespace Enki
 			bluetoothBase = new BluetoothBase();
 	
 		return bluetoothBase;
-	}
-	
-	void World::takeObjectOwnership(bool doTake)
-	{
-		worldTakeObjectOwnership = doTake;
 	}
 }
 
