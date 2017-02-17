@@ -22,6 +22,71 @@ namespace Enki
 {
 	using namespace std;
 
+	// Generic serialization of physical objects
+	template< typename T >
+	class Serializable : public T
+	{
+	public:
+		Serializable(T po): this_object(po) {}
+
+		void serialize(ostringstream* oss)
+		{
+			serializePhysObj(&this_object, oss);
+		}
+		
+		T* deserialize(string strPo)
+		{
+			return deserializePhysObj(strPo);
+		}
+		
+	private:
+		PhysicalObject this_object;
+	};
+	
+//	template<>
+//	class Serializable<PhysicalObject>
+//	{
+//	public:
+//		Serializable(PhysicalObject po): this_object(po) {}
+//
+//		void serialize(ostringstream* oss)
+//		{
+//			serializePhysObj(&this_object, oss);
+//		}
+//		
+//		PhysicalObject* deserialize(string strPo)
+//		{
+//			return deserializePhysObj(strPo);
+//		}
+//
+//	private:
+//		PhysicalObject this_object;
+//	};
+
+	// explicit template specialization to serialize Thymio2 robots
+	template<>
+	class Serializable<Thymio2>
+	{
+	public:
+		Serializable(Thymio2 po): this_object(po) {}
+		
+		void serialize(ostringstream* oss)
+		{
+			serializePhysObj(&this_object, oss);
+			for (int i = 0; i < Thymio2::LED_COUNT; i++)
+				serializeColor(this_object.getColorLed((Thymio2::LedIndex)i), oss);
+		}
+		
+		Thymio2* deserialize(string strPo)
+		{
+			return deserializeThymio(strPo);
+		}
+		
+	private:
+		Thymio2 this_object;
+	};
+
+	
 	string serialize(World* world)
 	{
 		ostringstream* oss = new ostringstream();
