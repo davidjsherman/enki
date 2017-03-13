@@ -155,13 +155,10 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 		{
 			World* w = gen->getWorld();
 
-			ostringstream outputStream;
-			serializeWorld(w, outputStream);
+			string s = w->serialize(true);
+			string s1 = w->serialize(true);
 
-			ostringstream outputStream2;
-			serializeWorld(w, outputStream2);
-
-			REQUIRE( outputStream.str() == outputStream2.str() );
+			REQUIRE( s == s1 );
 		}
 	}
 
@@ -171,11 +168,11 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			// Creating a random Thymio
 			Thymio2* t = gen->getRandomizer()->randThymio();
 
-			ostringstream outputStream;
-			serializeThymio(t, outputStream);
+			ostringstream* outputStream = new ostringstream();
+			t->serialize( outputStream, true);
 
-			ostringstream outputStream2;
-			serializeThymio(t, outputStream2);
+			ostringstream* outputStream2 = new ostringstream();
+			t->serialize(outputStream2, true);
 
 			delete t;
 
@@ -189,11 +186,11 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 		{
 			Color c = gen->getRandomizer()->randColor();
 
-			ostringstream outputStream;
-			serializeColor(c, outputStream);
+			ostringstream* outputStream = new ostringstream();
+			c.serialize(outputStream);
 
-			ostringstream outputStream2;
-			serializeColor(c, outputStream2);
+			ostringstream* outputStream2 = new ostringstream();
+			c.serialize(outputStream2);
 
 			REQUIRE( outputStream.str() == outputStream2.str() );
 		}
@@ -206,9 +203,8 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			World* w = gen->getWorld();
 
 			REQUIRE( w->objects.size() == 1);
-
-			std::string outputString = serialize(w);
-			std::string outputString2 = serialize(w);
+			std::string outputString = w->serialize(true);
+			std::string outputString2 = w->serialize(true);
 
 			REQUIRE( outputString == outputString2 );
 
@@ -226,13 +222,13 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 		{
 			World* w = gen->getWorld();
 
-			ostringstream outputStream;
-			serializeWorld(w, outputStream);
+			string s = w->serialize(true);
 
-			World* w1 = deserializeWorld(outputStream.str());
+			World* w1 = World::initWorld(s);
+            
 			REQUIRE( equalsWorld(w, w1) );
 
-			World* w2 = deserializeWorld(outputStream.str());
+			World* w2 = World::initWorld(s);
 			// this assume that w == w2
 			REQUIRE( equalsWorld(w1, w2) );
 			delete w1;
@@ -245,13 +241,15 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 		{
 			Thymio2* t = gen->getRandomizer()->randThymio();
 
-			ostringstream outputStream;
-			serializeThymio(t, outputStream);
+			ostringstream* outputStream = new ostringstream();
+			t->serialize(outputStream, true);
 
-			Thymio2* t1 = deserializeThymio(outputStream.str());
+			Thymio2* t1 = new Thymio2();
+			t1->deserialize(outputStream->str(), true);
 			REQUIRE( equalsThymio(t, t1) );
 
-			Thymio2* t2 = deserializeThymio(outputStream.str());
+			Thymio2* t2= new Thymio2();
+			t2->deserialize(outputStream->str(), true);
 			REQUIRE( equalsThymio(t1, t2) );
 
 			delete t1;
@@ -265,13 +263,15 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 		{
 			Color c = gen->getRandomizer()->randColor();
 
-			ostringstream outputStream;
-			serializeColor(c, outputStream);
+			ostringstream* outputStream = new ostringstream();
+			c.serialize(outputStream);
 
-			Color c1 = deserializeColor(outputStream.str());
+			vector<string> tabC = split(outputStream->str(), TYPE_SEPARATOR);
+			int pos = 0;
+			Color c1 = Color(tabC,&pos);
 			REQUIRE( equalsColor(c, c1) );
-
-			Color c2 = deserializeColor(outputStream.str());
+			pos = 0;
+			Color c2 = Color(tabC, &pos);
 			REQUIRE( equalsColor(c1, c2) );
 		}
 	}
@@ -282,12 +282,12 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			gen->add(Randomizer::THYMIO2_, 1);
 			World* w = gen->getWorld();
 
-			std::string outputString = serialize(w);
-			World* w1 = deserialize(outputString);
+			std::string outputString = w->serialize(true);
+			World* w1 = World::initWorld(outputString);
 
 			REQUIRE( equalsWorld(w, w1) );
 
-			World* w2 = deserialize(outputString);
+			World* w2 = World::initWorld(outputString);
 			REQUIRE( equalsWorld(w1, w2) );
 
 			gen->resetWorld();
