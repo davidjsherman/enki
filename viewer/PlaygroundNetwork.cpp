@@ -66,13 +66,20 @@ int main(int argc, char* argv[])
 		{
 			Client *client = new Client(argv[1], atoi(argv[2]));
 			thread threadClient([client]() { client->run(); });
-			threadClient.detach();
-
-			sleep(1); // Wait client thread initialization
-
+			
+			while(client->getWorld() == NULL) // Wait client thread initialization
+			{
+				usleep(100);
+			}
+			
 			ViewerWidget viewer(client->getWorld(), 0);
 			viewer.show();
 			app.exec();
+			World * w = client->getWorld();
+			client->stop();
+			threadClient.join();
+			delete client;
+			delete w;
 		}
 		else // server
 		{
@@ -122,11 +129,16 @@ int main(int argc, char* argv[])
 
 			Server* server = new Server(world);
 			thread threadServer([server]() { server->run(); });
-			threadServer.detach();
-
+			
 			ViewerServer* viewer = new ViewerServer(world, server);
 			viewer->show();
 			app.exec();
+			
+			server->stop();
+			threadServer.join();
+			delete server;
+			
+			delete world;
 		}
 	}
 	catch (DashelException e)

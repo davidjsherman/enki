@@ -147,11 +147,11 @@ namespace Enki
 		addLocalInteraction(&speaker);
 	}
     
-	void Sbot::serialize(std::ostringstream* oss, const bool first) const
+	void Sbot::serialize(std::ostream& oss, const bool first) const
 	{
-		*oss << static_cast<int>(Factory::TypeObject::SBOT) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
+		oss << static_cast<int>(Factory::TypeObject::SBOT) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
 		Robot::serializeRobot(oss) ;
-		*oss << OBJECT_SEPARATOR;
+		oss << OBJECT_SEPARATOR;
 	}
 
 	void Sbot::deserialize(const std::string& strSbot, const bool first)

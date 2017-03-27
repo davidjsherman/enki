@@ -164,7 +164,7 @@ SCENARIO( "Receive Data", "[Enki::Network]" )
 			server->stop();
 			threadClient.join();
 			delete client;
-
+			delete worldClient;
 			threadServer.join();
 			delete server;
 

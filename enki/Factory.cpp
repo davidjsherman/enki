@@ -24,7 +24,7 @@
 #include "robots/marxbot/Marxbot.h"
 
 
-Enki::PhysicalObject* Factory::initObject(const std::vector<std::string> tabObj) const
+Enki::PhysicalObject* Factory::initObject(const std::vector<std::string>& tabObj) const
 {
 	int pos = 0;
 	int type_object = stod(tabObj[pos++]);

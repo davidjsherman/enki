@@ -28,7 +28,7 @@ class Factory
 public:
 	enum class TypeObject { PHYS_OBJ, THYMIO2, EPUCK, SBOT, MARXBOT, KHEPERA  };
 	
-	Enki::PhysicalObject* initObject(const std::vector<std::string> tabObj) const;
+	Enki::PhysicalObject* initObject(const std::vector<std::string>& tabObj) const;
 };
 
 #endif /* Factory.h */

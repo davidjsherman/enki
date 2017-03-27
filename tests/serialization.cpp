@@ -161,23 +161,19 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 			REQUIRE( s == s1 );
 		}
 	}
-
+	
 	SECTION( "[S] Thymio2" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			// Creating a random Thymio
 			Thymio2* t = gen->getRandomizer()->randThymio();
-
-			ostringstream* outputStream = new ostringstream();
-			t->serialize( outputStream, true);
-
-			ostringstream* outputStream2 = new ostringstream();
-			t->serialize(outputStream2, true);
-
+			unique_ptr<ostringstream> outputStream (new ostringstream());
+			t->serialize(*outputStream, true);
+			unique_ptr<ostringstream> outputStream2 (new ostringstream());
+			t->serialize(*outputStream2, true);
+			REQUIRE( outputStream->str() == outputStream2->str() );
+			
+			
 			delete t;
-
-			REQUIRE( outputStream.str() == outputStream2.str() );
-
 		}
 	}
 
@@ -185,14 +181,12 @@ TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
 			Color c = gen->getRandomizer()->randColor();
-
-			ostringstream* outputStream = new ostringstream();
-			c.serialize(outputStream);
-
-			ostringstream* outputStream2 = new ostringstream();
-			c.serialize(outputStream2);
-
-			REQUIRE( outputStream.str() == outputStream2.str() );
+			unique_ptr<ostringstream> outputStream (new ostringstream());
+			c.serialize(*outputStream);
+			unique_ptr<ostringstream> outputStream2 (new ostringstream());
+			
+			c.serialize(*outputStream2);
+			REQUIRE( outputStream->str() == outputStream2->str() );
 		}
 	}
 
@@ -225,7 +219,7 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 			string s = w->serialize(true);
 
 			World* w1 = World::initWorld(s);
-            
+			
 			REQUIRE( equalsWorld(w, w1) );
 
 			World* w2 = World::initWorld(s);
@@ -240,14 +234,12 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
 			Thymio2* t = gen->getRandomizer()->randThymio();
-
-			ostringstream* outputStream = new ostringstream();
-			t->serialize(outputStream, true);
-
+			unique_ptr<ostringstream> outputStream (new ostringstream());
+			t->serialize(*outputStream, true);
 			Thymio2* t1 = new Thymio2();
 			t1->deserialize(outputStream->str(), true);
 			REQUIRE( equalsThymio(t, t1) );
-
+			
 			Thymio2* t2= new Thymio2();
 			t2->deserialize(outputStream->str(), true);
 			REQUIRE( equalsThymio(t1, t2) );
@@ -262,11 +254,9 @@ TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
 			Color c = gen->getRandomizer()->randColor();
-
-			ostringstream* outputStream = new ostringstream();
-			c.serialize(outputStream);
-
-			vector<string> tabC = split(outputStream->str(), TYPE_SEPARATOR);
+			unique_ptr<ostringstream> outputStream (new ostringstream());
+			c.serialize(*outputStream);
+			vector<string>& tabC = split(outputStream->str(), TYPE_SEPARATOR);
 			int pos = 0;
 			Color c1 = Color(tabC,&pos);
 			REQUIRE( equalsColor(c, c1) );

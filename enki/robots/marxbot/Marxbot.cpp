@@ -7,8 +7,8 @@
     Copyright (C) 2006-2008 Laboratory of Robotics Systems, EPFL, Lausanne
     See AUTHORS for details
 
-    This program is free software; the authors of any publication 
-    arising from research using this software are asked to add the 
+    This program is free software; the authors of any publication
+    arising from research using this software are asked to add the
     following reference:
     Enki - a fast 2D robot simulator
     http://home.gna.org/enki
@@ -51,33 +51,33 @@ namespace Enki
 			dist = 4526*exp(-0.9994*dist);
 		else
 			dist = random.getRange(20.0);
-		
+
 		dist *= (0.97+random.getRange(0.06));
-		
+
 		return dist;
 	}
-	
+
 	Marxbot::Marxbot() :
 		DifferentialWheeled(15, 30, 0.02),
 		rotatingDistanceSensor(this, 11, 90)
 	{
 		addLocalInteraction(&rotatingDistanceSensor);
-		
+
 		setCylindric(8.5, 12, 1000);
 		setColor(Color(0.7, 0.7, 0.7));
 	}
-	
+
 	double Marxbot::getVirtualBumper(unsigned number)
 	{
 		assert(number < 24);
 		unsigned physicalNumber = (24 + 12 - number) % 24;
 		return marxbotVirtualBumperResponseFunction(sqrt(rotatingDistanceSensor.zbuffer[(physicalNumber * 180) / 24]) - getRadius());
 	}
-	
-	void Marxbot::serialize(std::ostringstream* oss, const bool first) const{
-		*oss << static_cast<int>(Factory::TypeObject::MARXBOT) << TYPE_SEPARATOR<< getId() << TYPE_SEPARATOR;
-		Robot::serialize(oss, first);
-		*oss << OBJECT_SEPARATOR;
+
+	void Marxbot::serialize(std::ostream& oss, const bool first) const{
+		oss << static_cast<int>(Factory::TypeObject::MARXBOT) << TYPE_SEPARATOR<< getId() << TYPE_SEPARATOR;
+		Robot::serializeRobot(oss);
+		oss << OBJECT_SEPARATOR;
 	}
 
 	void Marxbot::deserialize(const std::string& strMarxbot, const bool first)
@@ -87,4 +87,3 @@ namespace Enki
 		Robot::deserializeRobot(strMarxbot, &position);
 	}
 }
-

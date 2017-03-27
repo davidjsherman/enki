@@ -111,6 +111,10 @@ namespace Enki
 	public:
 		//! Constructor
 		Client(const std::string& ip, const int port);
+		virtual ~Client(){
+			closeStream(inputStream);
+		};
+        
 		World* getWorld() const;
 
 	protected:

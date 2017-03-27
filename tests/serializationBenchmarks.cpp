@@ -21,6 +21,7 @@
 #include <enki/robots/thymio2/Thymio2.h>
 #include <enki/worldgenerator/WorldGenerator.h>
 #include <chrono>
+#include <memory>
 
 /*
 	This test aims to provide a simple way to validate our protocol in terms of
@@ -157,19 +158,19 @@ double globalSerialization(void* w)
 double thymioSerialization(void* t)
 {
 	Thymio2* thymio = (Thymio2*) t;
-	ostringstream* output = new ostringstream();
-	thymio->serialize(output, true);
+	unique_ptr<ostringstream> output (new ostringstream());
+	thymio->serialize(*output, true);
 
-	return output.str().size();
+	return output->str().size();
 }
 
 double colorSerialization(void* c)
 {
 	Color* color = (Color*) c;
-	ostringstream* output = new ostringstream();
-	color->serialize(output);
+	unique_ptr<ostringstream> output (new ostringstream());
+	color->serialize(*output);
 
-	return output.str().size();
+	return output->str().size();
 }
 
 // Measure the executing time of FUNC function pointer called
@@ -200,8 +201,8 @@ double globalDeserialization(void* w)
 
 double thymioDeserialization(void* t)
 {
-	ostringstream* output = new ostringstream();
-	((Thymio2*) t)->serialize(output, true);
+	unique_ptr<ostringstream> output (new ostringstream());
+	((Thymio2*) t)->serialize(*output, true);
 	Thymio2* t1 = new Thymio2();
 	
 	timepoint start = chrono::system_clock::now();
@@ -213,11 +214,11 @@ double thymioDeserialization(void* t)
 
 double colorDeserialization(void* c)
 {
-	ostringstream* output = new ostringstream();
-	((Color*)c)->serialize(output);
+	unique_ptr<ostringstream> output (new ostringstream());
+	((Color*)c)->serialize(*output);
 
 	timepoint start = chrono::system_clock::now();
-	vector<string> s = split(output->str(), TYPE_SEPARATOR);
+	vector<std::string>& s = split(output->str(), TYPE_SEPARATOR);
 	int pos = 0;
 	Color(s, &pos); (output->str());
 	timepoint end = chrono::system_clock::now();

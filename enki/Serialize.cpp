@@ -23,26 +23,19 @@ namespace Enki
 {
 	using namespace std;
 	
-	std::vector<std::string> split(const string& str, const char& separator)
+	std::vector<std::string>& split(const string& str, const char separator)
 	{
-		std::vector<std::string> s;
+		std::vector<std::string>* tab = new std::vector<std::string>();
 		int pos = -1;
-		bool f = true;
-		while(f || pos != std::string::npos)
+		do
 		{
-			int deb = pos + 1;
-			pos = str.find_first_of(separator, deb);
-			s.push_back(str.substr(deb, pos - deb));
-			f=false;
-		}
+			int begin = pos + 1;
+			pos = str.find_first_of(separator, begin);
+			tab->push_back(str.substr(begin, pos - begin));
+		} while (pos != std::string::npos);
 		// delete blank end
-		s.pop_back();
-		return s;
+		tab->pop_back();
+		return *tab;
 	}
 	
-	void serializePoint(const Point &pos, ostringstream* oss)
-	{
-		*oss << pos.x << TYPE_SEPARATOR
-		<< pos.y << TYPE_SEPARATOR;
-	}
 }

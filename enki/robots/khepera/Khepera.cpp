@@ -7,8 +7,8 @@
     Copyright (C) 2006-2008 Laboratory of Robotics Systems, EPFL, Lausanne
     See AUTHORS for details
 
-    This program is free software; the authors of any publication 
-    arising from research using this software are asked to add the 
+    This program is free software; the authors of any publication
+    arising from research using this software are asked to add the
     following reference:
     Enki - a fast 2D robot simulator
     http://home.gna.org/enki
@@ -61,20 +61,20 @@ namespace Enki
 			addLocalInteraction(&infraredSensor6);
 			addLocalInteraction(&infraredSensor7);
 		}
-		
+
 		if (capabilities & CAPABILITY_CAMERA)
 		{
 			addLocalInteraction(&camera);
 		}
-		
+
 		setCylindric(2.6, 5, 80);
 	}
-	
-	void Khepera::serialize(std::ostringstream* oss, const bool first) const
+
+	void Khepera::serialize(std::ostream& oss, const bool first) const
 	{
-		*oss << static_cast<int>(Factory::TypeObject::KHEPERA) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
-		Robot::serialize(oss, first);
-		*oss << OBJECT_SEPARATOR;
+		oss << static_cast<int>(Factory::TypeObject::KHEPERA) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
+		Robot::serializeRobot(oss);
+		oss << OBJECT_SEPARATOR;
 	}
 
 	void Khepera::deserialize(const std::string& strKhepera, const bool first)
@@ -84,4 +84,3 @@ namespace Enki
 		Robot::deserializeRobot(strKhepera, &position);
 	}
 }
-

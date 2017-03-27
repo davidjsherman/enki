@@ -257,9 +257,9 @@ namespace Enki
 			void applyTransformation(const Matrix22& rot, const Point& trans, double* radius = 0);
             
 			//! Return a serialization of Hull
-			void serialize(std::ostringstream* oss) const;
-			//! Deserialize a Hull from a string, pos corresponds to the beginning of the hull in the string
-			static PhysicalObject::Hull deserialize(const std::string& strHull, int* pos);
+			void serialize(std::ostream& oss) const;
+			//! Create a Hull from a string, pos corresponds to the beginning of the hull in the string
+			Hull(const std::string& strHull, int* pos);
 		};
 		
 	private:		// variables
@@ -390,7 +390,7 @@ namespace Enki
         
     public:
 		//! Return a serialization of PhysicalObject (for serialize init first = true, else first = false)
-		virtual void serialize(std::ostringstream* oss, const bool first) const;
+		virtual void serialize(std::ostream& oss, const bool first) const;
 		//! Deserialize a PhysicalObject from a string (for deserialize init first = true, else first = false)
 		virtual void deserialize(const std::string& strPhysicalObject, const bool first);
 	};
@@ -426,7 +426,7 @@ namespace Enki
         
 	public:
 		//! Return a serialization of Robot
-		void serializeRobot(std::ostringstream* oss) const;
+		void serializeRobot(std::ostream& oss) const;
 		//! Deserialize a world from a Robot
 		void deserializeRobot(const std::string& strRobot, int *position);
 	};
@@ -474,11 +474,11 @@ namespace Enki
 			GroundTexture();
 			//! build a texture from an existing pointer
 			GroundTexture(unsigned width, unsigned height, const uint32_t* data);
-            
+			
 			//! Return a serialization of GroundTexture (for serialize init first = true, else first = false)
-			void serialize(std::ostringstream* oss) const;
-			//! Deserialize a world from a string (for deserialize init first = true, else first = false)
-			static GroundTexture deserialize(const std::string& strGroundTexture, int indice);
+			void serialize(std::ostream& oss) const;
+			//! Create groundTexture from a string (for deserialize init first = true, else first = false)
+			GroundTexture(const std::string& strGroundTexture, int indice);
 		};
 		
 		//! Current ground texture
