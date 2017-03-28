@@ -1,7 +1,6 @@
 /*
 Enki - a fast 2D robot simulator
 Copyright © 2017 Nicolas Palard <nicolas.palard@etu.u-bordeaux.fr>
-Copyright © 2017 Mathieu Lirzin <mathieu.lirzin@etu.u-bordeaux.fr>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,270 +20,501 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <enki/PhysicalEngine.h>
 #include <enki/robots/thymio2/Thymio2.h>
+#include <enki/robots/e-puck/EPuck.h>
+#include <enki/robots/s-bot/Sbot.h>
+#include <enki/robots/marxbot/Marxbot.h>
+#include <enki/robots/khepera/Khepera.h>
 #include <enki/Serialize.h>
 #include <enki/worldgenerator/WorldGenerator.h>
 
-const double EPSILON = pow(10, -2);
-const int ITERATION_NUMBER = 100;
-
 using namespace Enki;
-using namespace std;
 
-static void printWorld(World* w)
+#define NB_ITERATIONS 10
+
+static const double EPSILON = pow(10, -PRECISION);
+
+
+static int checkPoint(std::vector<std::string> &string, Point p, int start)
 {
-	cerr << "- Walls type : " << w->wallsType << endl;
-	if (w->wallsType == World::WALLS_CIRCULAR)
+	int indice = start;
+	REQUIRE ( fabs(stod(string[indice++]) - p.x) <= EPSILON );
+	REQUIRE ( fabs(stod(string[indice++]) - p.y) <= EPSILON );
+	return indice;
+}
+
+
+static int checkColor(std::vector<std::string> &string, Color c, int start)
+{
+	for(int i = start; i < start+4; i++)
 	{
-		cerr << "- World size : " << w->r << endl;
+		REQUIRE( fabs(stod(string[i]) - c[i-start]) <= EPSILON );
+	}
+
+	return start + 4;
+}
+
+static int checkGroundTexture(std::vector<std::string> &string, World::GroundTexture gt, int start)
+{
+	int indice = start;
+	REQUIRE( fabs(stod(string[indice++]) - gt.width) <= EPSILON );
+	REQUIRE( fabs(stod(string[indice++]) - gt.height) <= EPSILON );
+	REQUIRE( fabs(stod(string[indice++]) - gt.width * gt.height) <= EPSILON );
+
+	for(int i = 0 ; i < gt.width * gt.height ; i++)
+	{
+		REQUIRE( fabs(stod(string[i + indice]) - gt.data[i]) <= EPSILON );
+	}
+
+	return indice + gt.width * gt.height;
+}
+
+static int checkPolygone(std::vector<std::string> &string, Polygone poly, int start)
+{
+	int indice = start;
+	REQUIRE ( (stod(string[indice++]) - poly.size()) <= EPSILON );
+	for (int i = 0; i < poly.size(); i++)
+	{
+		checkPoint(string, poly[i], indice+i*2);
+	}
+
+	return indice + poly.size() * 2;
+}
+
+static int checkHull(std::vector<std::string> &string, PhysicalObject::Hull hull, int start)
+{
+	int indice = start;
+	REQUIRE( (stod(string[indice++]) - hull.size()) <= EPSILON );
+
+	for (PhysicalObject::Part p : hull)
+	{
+		indice = checkPolygone(string, p.getShape(), indice);
+		REQUIRE ( fabs(stod(string[indice++]) - p.getHeight()) <= EPSILON );
+		REQUIRE ( stod(string[indice++]) == p.isTextured() );
+
+		if (p.isTextured())
+		{
+			const Textures& textures = p.getTextures();
+			REQUIRE ( stod(string[indice++]) == textures.size() );
+			for(int i = 0 ; i < textures.size() ; i++)
+			{
+				Texture t = textures[i];
+				REQUIRE ( stod(string[indice++]) == t.size() );
+				for(int j = 0 ; j < t.size() ; j++)
+				{
+					indice = checkColor(string, t[j], indice);
+				}
+			}
+		}
+	}
+	return indice;
+}
+
+static int checkRobot(std::vector<std::string> &string, const Robot &r, int start)
+{
+	int indice = start;
+	indice = checkPoint(string, r.pos, indice);
+	REQUIRE ( fabs(stod(string[indice++]) - r.angle) <= EPSILON );
+
+	return indice;
+}
+
+
+static int checkThymio(std::vector<std::string> &string, const Thymio2 &t, int start)
+{
+	int indice = start;
+	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::TypeObject::THYMIO2) );
+	REQUIRE ( stod(string[indice++]) == t.getId() );
+
+	indice = checkRobot(string, t, indice);
+
+	REQUIRE ( stod(string[indice++]) == Thymio2::LED_COUNT );
+
+	for (int i = 0; i < Thymio2::LED_COUNT; ++i)
+	{
+		checkColor(string, t.getColorLed((Thymio2::LedIndex)i), indice + i*4);
+	}
+
+	return indice + Thymio2::LED_COUNT * 4;
+}
+
+static int checkEPuck(std::vector<std::string> &string, const EPuck &e, int start)
+{
+	int indice = start;
+	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::TypeObject::EPUCK) );
+	REQUIRE ( stod(string[indice++]) == e.getId() );
+
+	indice = checkRobot(string, e, indice);
+
+	return indice;
+}
+
+static int checkSbot(std::vector<std::string> &string, const Sbot &s, int start)
+{
+	int indice = start;
+	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::TypeObject::SBOT) );
+	REQUIRE ( stod(string[indice++]) == s.getId() );
+
+	indice = checkRobot(string, s, indice);
+
+	return indice;
+}
+
+static int checkMarxbot(std::vector<std::string> &string, const Marxbot &m, int start)
+{
+	int indice = start;
+	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::TypeObject::MARXBOT) );
+	REQUIRE ( stod(string[indice++]) == m.getId() );
+
+	indice = checkRobot(string, m, indice);
+
+	return indice;
+}
+
+static int checkKhepera(std::vector<std::string> &string, const Khepera &k, int start)
+{
+	int indice = start;
+	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::TypeObject::KHEPERA) );
+	REQUIRE ( stod(string[indice++]) == k.getId() );
+
+	indice = checkRobot(string, k, indice);
+
+	return indice;
+}
+
+static int checkBasePhysObject(std::vector<std::string> &string, const PhysicalObject &po, int start)
+{
+	int indice = start;
+	REQUIRE ( stod(string[indice++]) ==  static_cast<int>(Factory::TypeObject::PHYS_OBJ) );
+	REQUIRE ( stod(string[indice++]) == po.getId() );
+
+	indice = checkPoint(string, po.pos, indice);
+	REQUIRE ( fabs(stod(string[indice++]) - po.angle) <= EPSILON );
+
+	indice = checkColor(string, po.getColor(), indice);
+
+	return indice;
+}
+
+static int checkPhysicalObject(std::vector<std::string> &string, const PhysicalObject &po, int start)
+{
+	int indice = checkBasePhysObject(string, po, start);
+
+	REQUIRE ( stod(string[indice++]) == po.isCylindric() );
+
+	if (po.isCylindric())
+	{
+		REQUIRE ( fabs(stod(string[indice++]) - po.getRadius()) <= EPSILON );
+		REQUIRE ( fabs(stod(string[indice++]) - po.getHeight()) <= EPSILON );
+		REQUIRE ( fabs(stod(string[indice++]) - po.getMass()) <= EPSILON );
 	}
 	else
 	{
-		cerr << "- World size : " << w->w << "x" << w->h << endl;
+		indice = checkHull(string, po.getHull(), indice);
+		REQUIRE ( fabs(stod(string[indice++]) - po.getMass()) <= EPSILON );
 	}
-	cerr << "- Number of objects : " << w->objects.size() << endl;
-	for (PhysicalObject* o : w->objects)
-	{
-		cerr << "--- Type : " << typeid(*o).name() << endl;
-		cerr << "--- PhysicalObject : " << o->pos.x << ";" << o->pos.y << endl;
-		cerr << "--- Color : " << endl
-		<< "----- " << o->getColor().r() << endl
-		<< "----- " << o->getColor().g() << endl
-		<< "----- " << o->getColor().b() << endl
-		<< "----- " << o->getColor().a() << endl;
-	}
+
+	return indice;
 }
 
-static bool equalsPoint(Point p1, Point p2)
+TEST_CASE( "Unitary TEST_CASE on serialization", "[UNIT Serialization]" )
 {
-	return ( (fabs(p1.x - p2.x) <= EPSILON) && (fabs(p1.y - p2.y) <= EPSILON) );
-}
-
-static bool equalsColor(Color c1, Color c2)
-{
-	return (fabs(c1.r() - c2.r()) < EPSILON &&
-	fabs(c1.g() - c2.g()) < EPSILON &&
-	fabs(c1.b() - c2.b()) < EPSILON &&
-	fabs(c1.a() - c2.a()) < EPSILON);
-}
-
-// Return whether or not the thymios t1 and t2 are equals
-// In order to test the equality we only test the position
-// the ledcolor and the angle.
-static bool equalsThymio(Thymio2* t1, Thymio2* t2)
-{
-	if (!equalsPoint(t1->pos, t2->pos))
-	{
-		cerr << "[T] Not same position" << endl << "  [POS1]: " << t1->pos.x << "x" << t1->pos.y << endl << "  [POS2]: " << t2->pos.x << "x" << t2->pos.y << endl;
-		return false;
-	}
-	for (int i = 0; i < Thymio2::LED_COUNT; i++)
-	{
-		if (!equalsColor(t1->getColorLed((Thymio2::LedIndex)i),
-		t2->getColorLed((Thymio2::LedIndex)i)))
+	Randomizer r;
+	SECTION("Color serialization") {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			cerr << "[T] Not the same color" << endl;
-			return false;
+			Color c = r.randColor();
+
+			std::ostringstream stream;
+			c.serialize(stream);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkColor(splittedString, c, 0);
+			delete &splittedString;
 		}
 	}
-	return true;
 
-}
-
-static bool equalsPhysicalObjects(PhysicalObject* o1, PhysicalObject* o2)
-{
-	// TODO: Implement this function when serialziation/deserialization will be done.
-	return true;
-}
-
-static bool equalsWorld(World* w1, World* w2)
-{
-	if (w1->wallsType != w2->wallsType)
-	{
-		cerr << "[W] Not same wallsType" << endl;
-		return false;
-	}
-	// TODO: Compare ground texture ?
-	if ((w1->h != w2->h) || (w1->w != w2->w))
-	{
-		cerr << "[W] Not same size" << endl;
-		return false;
-	}
-	if (w1->objects.size() != w2->objects.size())
-	{
-		cerr << "[W] Not same number of objects" << endl;
-		return false;
-	}
-
-	World::ObjectsIterator it1 = w1->objects.begin();
-	World::ObjectsIterator it2 = w2->objects.begin();
-	// 2nd part of this boolean expression is useless because of the previous
-	// condition but keep it for a better lisibility and understandability.
-	while (it1 != w1->objects.end() && it2 != w2->objects.end())
-	{
-		Thymio2* t1 = dynamic_cast<Thymio2*>(*it1);
-		if (t1 != NULL)
+	SECTION("GroundTexture serialization") {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			Thymio2* t2 = dynamic_cast<Thymio2*>(*it2);
-			if (t2 == NULL || !equalsThymio(t1, t2))
+			World::GroundTexture gt = r.randGroundTexture(0, 0);
+
+			std::ostringstream stream;
+			gt.serialize(stream);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkGroundTexture(splittedString, gt, 0);
+			delete &splittedString;
+		}
+	}
+
+	SECTION( "Hull/Part/Polygone serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			PhysicalObject::Hull hull = r.randHull(-1);
+
+			std::ostringstream stream;
+			hull.serialize(stream);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkHull(splittedString, hull, 0);
+			delete &splittedString;
+		}
+	}
+
+	SECTION ( "PhysicalObject (cylindric) full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			PhysicalObject* po = r.randPhysicalObject(0);
+
+			std::ostringstream stream;
+			po->serialize(stream, true);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkPhysicalObject(splittedString, *po, 0);
+			delete &splittedString;
+			delete po;
+		}
+	}
+
+	SECTION ( "PhysicalObject (custom hull) full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			PhysicalObject* po = r.randPhysicalObject(-1);
+
+			std::ostringstream stream;
+			po->serialize(stream, true);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkPhysicalObject(splittedString, *po, 0);
+			delete &splittedString;
+			delete po;
+		}
+	}
+
+	SECTION ( "PhysicalObject (CH with textures) full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			PhysicalObject* po = r.randPhysicalObject(-1);
+			while( !po->getHull()[0].isTextured() )
 			{
-				return false;
+				delete po;
+				po = r.randPhysicalObject(-1);
 			}
-			it1++; it2++;
-			continue;
-		}
-		PhysicalObject* o1 = dynamic_cast<PhysicalObject*>(*it1);
-		if (o1 == NULL)
-		{
-			return false;
-		}
-		PhysicalObject* o2 = dynamic_cast<PhysicalObject*>(*it2);
-		if (o2 == NULL || !equalsPhysicalObjects(o1, o2))
-		{
-			return false;
 
-		}
-		it1++; it2++;
-	}
-	return true;
-}
+			std::ostringstream stream;
+			po->serialize(stream, true);
 
-TEST_CASE( "Serialization", "[Serialization Reproducibility]" ) {
-	WorldGenerator* gen = new WorldGenerator();
-	SECTION( "[S] World" ) {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
-		{
-			World* w = gen->getWorld();
-
-			string s = w->serialize(true);
-			string s1 = w->serialize(true);
-
-			REQUIRE( s == s1 );
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkPhysicalObject(splittedString, *po, 0);
+			delete &splittedString;
+			delete po;
 		}
 	}
-	
-	SECTION( "[S] Thymio2" ) {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
+
+	SECTION ( "PhysicalObject update serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			Thymio2* t = gen->getRandomizer()->randThymio();
-			unique_ptr<ostringstream> outputStream (new ostringstream());
-			t->serialize(*outputStream, true);
-			unique_ptr<ostringstream> outputStream2 (new ostringstream());
-			t->serialize(*outputStream2, true);
-			REQUIRE( outputStream->str() == outputStream2->str() );
-			
-			
+			PhysicalObject* po = r.randPhysicalObject(0);
+
+			std::ostringstream stream;
+			po->serialize(stream, false);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkBasePhysObject(splittedString, *po, 0);
+			delete &splittedString;
+			delete po;
+		}
+	}
+
+	SECTION( "Robot serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			Robot* robot = r.randRobot();
+
+			std::ostringstream stream;
+			robot->serializeRobot(stream);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkRobot(splittedString, *robot, 0);
+			delete &splittedString;
+			delete robot;
+		}
+	}
+
+	SECTION ( "Thymio2 full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			Thymio2* t = r.randThymio();
+
+			std::ostringstream stream;
+			t->serialize(stream, true);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkThymio(splittedString, *t, 0);
+			delete &splittedString;
 			delete t;
 		}
 	}
 
-	SECTION( "[S] Color" ) {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
+	SECTION( "EPuck full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			Color c = gen->getRandomizer()->randColor();
-			unique_ptr<ostringstream> outputStream (new ostringstream());
-			c.serialize(*outputStream);
-			unique_ptr<ostringstream> outputStream2 (new ostringstream());
-			
-			c.serialize(*outputStream2);
-			REQUIRE( outputStream->str() == outputStream2->str() );
+			EPuck* e = r.randEPuck();
+
+			std::ostringstream stream;
+			e->serialize(stream, true);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkEPuck(splittedString, *e, 0);
+			delete &splittedString;
+			delete e;
 		}
 	}
 
-	SECTION( "[S] World with one Thymio") {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
+	SECTION( "Sbot full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			gen->add(Randomizer::THYMIO2_, 1);
-			World* w = gen->getWorld();
+			Sbot* s = r.randSbot();
 
-			REQUIRE( w->objects.size() == 1);
-			std::string outputString = w->serialize(true);
-			std::string outputString2 = w->serialize(true);
+			std::ostringstream stream;
+			s->serialize(stream, true);
 
-			REQUIRE( outputString == outputString2 );
-
-			// Since it's looping, we need to reset the world.
-			gen->resetWorld();
-		}
-	}
-	delete gen;
-}
-
-TEST_CASE( "Deserialization", "[Deserialization Reproducibility]") {
-	WorldGenerator* gen = new WorldGenerator();
-	SECTION( "[D] Empty World" ) {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
-		{
-			World* w = gen->getWorld();
-
-			string s = w->serialize(true);
-
-			World* w1 = World::initWorld(s);
-			
-			REQUIRE( equalsWorld(w, w1) );
-
-			World* w2 = World::initWorld(s);
-			// this assume that w == w2
-			REQUIRE( equalsWorld(w1, w2) );
-			delete w1;
-			delete w2;
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkSbot(splittedString, *s, 0);
+			delete &splittedString;
+			delete s;
 		}
 	}
 
-	SECTION( "[D] Thymio2" ) {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
+	SECTION( "Marxbot full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			Thymio2* t = gen->getRandomizer()->randThymio();
-			unique_ptr<ostringstream> outputStream (new ostringstream());
-			t->serialize(*outputStream, true);
-			Thymio2* t1 = new Thymio2();
-			t1->deserialize(outputStream->str(), true);
-			REQUIRE( equalsThymio(t, t1) );
-			
-			Thymio2* t2= new Thymio2();
-			t2->deserialize(outputStream->str(), true);
-			REQUIRE( equalsThymio(t1, t2) );
+			Marxbot* m = r.randMarxbot();
 
-			delete t1;
-			delete t2;
-			delete t;
+			std::ostringstream stream;
+			m->serialize(stream, true);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkMarxbot(splittedString, *m, 0);
+			delete &splittedString;
+			delete m;
 		}
 	}
 
-	SECTION( "[D] Color" ) {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
+	SECTION( "Khepera full serialization" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			Color c = gen->getRandomizer()->randColor();
-			unique_ptr<ostringstream> outputStream (new ostringstream());
-			c.serialize(*outputStream);
-			vector<string>& tabC = split(outputStream->str(), TYPE_SEPARATOR);
-			int pos = 0;
-			Color c1 = Color(tabC,&pos);
-			REQUIRE( equalsColor(c, c1) );
-			pos = 0;
-			Color c2 = Color(tabC, &pos);
-			REQUIRE( equalsColor(c1, c2) );
+			Khepera* k = r.randKhepera();
+
+			std::ostringstream stream;
+			k->serialize(stream, true);
+
+			std::vector<std::string> &splittedString = split(stream.str(), TYPE_SEPARATOR);
+			checkKhepera(splittedString, *k, 0);
+			delete &splittedString;
+			delete k;
 		}
 	}
 
-	SECTION( "[D] World with one Thymio" ) {
-		for (int i = 0; i < ITERATION_NUMBER; i++)
+	SECTION( "Empty Circular World (No GT)" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
 		{
-			gen->add(Randomizer::THYMIO2_, 1);
-			World* w = gen->getWorld();
+			World* world = new World(r.randInt(1, 800), r.randColor());
+			std::string serializedWorld = world->serialize(true);
 
-			std::string outputString = w->serialize(true);
-			World* w1 = World::initWorld(outputString);
+			std::vector<std::string> &splittedString = split(serializedWorld, TYPE_SEPARATOR);
 
-			REQUIRE( equalsWorld(w, w1) );
+			// World Information.
+			int j = 0;
+			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stod(splittedString[j++]) == world->r );
 
-			World* w2 = World::initWorld(outputString);
-			REQUIRE( equalsWorld(w1, w2) );
+			// Color.
+			j = checkColor(splittedString, world->color, j);
 
-			gen->resetWorld();
+			// GroundTexture.
+			j = checkGroundTexture(splittedString, world->groundTexture, j);
 
-			delete w1;
-			delete w2;
+			delete world;
+			delete &splittedString;
 		}
 	}
-	delete gen;
+
+	SECTION ( "Empty Rectangular World (No GT)" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			World* world = new World(r.randInt(1, 800), r.randInt(1, 800), r.randColor());
+			std::string serializedWorld = world->serialize(true);
+
+			std::vector<std::string> &splittedString = split(serializedWorld, TYPE_SEPARATOR);
+
+			// World Information.
+			int j = 0;
+			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stod(splittedString[j++]) == world->w );
+			REQUIRE ( stod(splittedString[j++]) == world->h );
+
+			// Color.
+			j = checkColor(splittedString, world->color, j);
+
+			// GroundTexture.
+			j = checkGroundTexture(splittedString, world->groundTexture, j);
+
+			delete world;
+			delete &splittedString;
+		}
+	}
+
+	SECTION ( "Empty Rectangular World (GT)" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			World::GroundTexture gt = r.randGroundTexture(0, 0);
+
+			World* world = new World(r.randInt(1, 800), r.randInt(1, 800), r.randColor(), gt);
+			std::string serializedWorld = world->serialize(true);
+
+			std::vector<std::string> &splittedString = split(serializedWorld, TYPE_SEPARATOR);
+
+			// World Information.
+			int j = 0;
+			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stod(splittedString[j++]) == world->w );
+			REQUIRE ( stod(splittedString[j++]) == world->h );
+
+			// Color.
+			j = checkColor(splittedString, world->color, j);
+
+			// GroundTexture.
+			j = checkGroundTexture(splittedString, world->groundTexture, j);
+
+			delete world;
+			delete &splittedString;
+		}
+	}
+
+	SECTION ( "Empty Circular World (GT)" ) {
+		for (int i = 0; i < NB_ITERATIONS; i++)
+		{
+			World::GroundTexture gt = r.randGroundTexture(0, 0);
+
+			World* world = new World(r.randInt(1, 800), r.randColor(), gt);
+			std::string serializedWorld = world->serialize(true);
+
+			std::vector<std::string> &splittedString = split(serializedWorld, TYPE_SEPARATOR);
+
+			// World Information.
+			int j = 0;
+			REQUIRE ( stod(splittedString[j++]) == world->wallsType );
+			REQUIRE ( stod(splittedString[j++]) == world->r );
+
+			// Color.
+			j = checkColor(splittedString, world->color, j);
+
+			// GroundTexture.
+			j = checkGroundTexture(splittedString, world->groundTexture, j);
+
+			delete world;
+			delete &splittedString;
+		}
+	}
 }
