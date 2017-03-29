@@ -166,10 +166,10 @@ namespace Enki
 
 	void Thymio2::serialize(std::ostream& oss, const bool first) const
 	{
-		oss.precision(PRECISION);
+		oss.precision(serialize_precision);
 		oss.setf(std::ios::fixed);
 
-		oss << static_cast<int>(Factory::TypeObject::THYMIO2) << TYPE_SEPARATOR
+		oss << Factory::TypeObject::THYMIO2 << TYPE_SEPARATOR
 		<< getId() << TYPE_SEPARATOR;
 
 		Robot::serializeRobot(oss);
@@ -185,17 +185,16 @@ namespace Enki
 
 	void Thymio2::deserialize(const string& strThymio, const bool first)
 	{
-		std::vector<std::string>& tmpObj = split(strThymio, TYPE_SEPARATOR);
+		std::vector<std::string> tmpObj = split(strThymio, TYPE_SEPARATOR);
 
 		// Ignorate 2 first argmuments
 		int position = 2;
 		Robot::deserializeRobot(strThymio, &position);
 
-		int nb_led = stod(tmpObj[position++]);
+		int nb_led = stoi(tmpObj[position++]);
 		for (int i = 0; i < nb_led; i++)
 		{
 			setLedColor((Thymio2::LedIndex)i, Color(tmpObj, &position));
 		}
-		delete &tmpObj;
 	}
 }

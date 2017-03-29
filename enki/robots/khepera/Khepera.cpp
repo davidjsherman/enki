@@ -72,7 +72,7 @@ namespace Enki
 
 	void Khepera::serialize(std::ostream& oss, const bool first) const
 	{
-		oss << static_cast<int>(Factory::TypeObject::KHEPERA) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
+		oss << Factory::TypeObject::KHEPERA << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
 		Robot::serializeRobot(oss);
 		oss << OBJECT_SEPARATOR;
 	}

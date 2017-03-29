@@ -142,7 +142,7 @@ namespace Enki
 
 	void EPuck::serialize(std::ostream& oss, const bool first) const
 	{
-		oss << static_cast<int>(Factory::TypeObject::EPUCK) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
+		oss << Factory::TypeObject::EPUCK << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
 		Robot::serializeRobot(oss);
 		oss << OBJECT_SEPARATOR;
 	}

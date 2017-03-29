@@ -146,10 +146,10 @@ namespace Enki
 		addLocalInteraction(&mic);
 		addLocalInteraction(&speaker);
 	}
-    
+
 	void Sbot::serialize(std::ostream& oss, const bool first) const
 	{
-		oss << static_cast<int>(Factory::TypeObject::SBOT) << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
+		oss << Factory::TypeObject::SBOT << TYPE_SEPARATOR << getId() << TYPE_SEPARATOR;
 		Robot::serializeRobot(oss) ;
 		if (first)
 			getColor().serialize(oss);
@@ -159,12 +159,12 @@ namespace Enki
 	void Sbot::deserialize(const std::string& strSbot, const bool first)
 	{
 		// Ignorate 2 first argmuments
-        std::vector<std::string>& obj = split(strSbot, TYPE_SEPARATOR);
+		std::vector<std::string> obj = split(strSbot, TYPE_SEPARATOR);
 
 		int position = 2;
 		Robot::deserializeRobot(strSbot, &position);
 		if (first)
 			setColor(Color(obj, &position));
-    }
+	}
 }
 

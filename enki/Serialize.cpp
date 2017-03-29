@@ -23,19 +23,19 @@ namespace Enki
 {
 	using namespace std;
 	
-	std::vector<std::string>& split(const string& str, const char separator)
+	std::vector<std::string> split(const string& str, const char separator)
 	{
-		std::vector<std::string>* tab = new std::vector<std::string>();
+		std::vector<std::string> tab;
 		int pos = -1;
 		do
 		{
 			int begin = pos + 1;
 			pos = str.find_first_of(separator, begin);
-			tab->push_back(str.substr(begin, pos - begin));
+			tab.push_back(str.substr(begin, pos - begin));
 		} while (pos != std::string::npos);
 		// delete blank end
-		tab->pop_back();
-		return *tab;
+		tab.pop_back();
+		return tab;
 	}
 	
 }

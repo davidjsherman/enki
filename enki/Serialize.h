@@ -36,7 +36,7 @@
       eg: int;float;double;
 */
 
-#define PRECISION 2 // Precision of a double (2 digits after the decimal point).
+static const int serialize_precision = 2;// Precision of a double (2 digits after the decimal point).
 
 const char OBJECT_SEPARATOR = ':';
 const char TYPE_SEPARATOR = ';';
@@ -44,7 +44,7 @@ const char TYPE_SEPARATOR = ';';
 namespace Enki
 {
     //! Return a vector contains substring Resulting from the separation of the string by s separator
-    std::vector<std::string>& split(const std::string& str, const char separator);
+    std::vector<std::string> split(const std::string& str, const char separator);
 }
 
 #endif // SERIALIZE_H

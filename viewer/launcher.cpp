@@ -20,7 +20,7 @@
 #include "launcher.h"
 
 Enki::World* HostGui::createWorld() {
-	m_gen = new Enki::WorldGenerator(200,200);
+	m_gen = new Enki::WorldGenerator();
 	m_gen->add(PHYSICAL_OBJECTS_, 30);
 	m_gen->add(ONLY_ROBOTS_, 30);
 	Enki::World* w = m_gen->getWorld();

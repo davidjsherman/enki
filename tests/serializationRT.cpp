@@ -35,7 +35,7 @@
 using namespace Enki;
 using namespace std;
 
-const double EPSILON = pow(10, -PRECISION);
+const double EPSILON = pow(10, -serialize_precision);
 
 static Robot* createRobot(int type)
 {	
@@ -368,18 +368,15 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			color.serialize(oss);
 			
-			std::vector<std::string>& obj1 = split(oss.str(), TYPE_SEPARATOR);
+			std::vector<std::string> obj1 = split(oss.str(), TYPE_SEPARATOR);
 			int pos1 = 0;
 			Color color1 = Color(obj1, &pos1);
 			REQUIRE(equalsColor(color, color1));
 
-			std::vector<std::string>& obj2 = split(oss.str(), TYPE_SEPARATOR);
+			std::vector<std::string> obj2 = split(oss.str(), TYPE_SEPARATOR);
 			int pos2 = 0;
 			Color color2 = Color(obj2, &pos2);
 			REQUIRE(equalsColor(color, color2));
-
-			delete &obj1;
-			delete &obj2;
 
 			color = color1;
 		}

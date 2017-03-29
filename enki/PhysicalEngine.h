@@ -255,7 +255,7 @@ namespace Enki
 			Hull& operator+=(const Hull& that);
 			//! Compute the shape of this hull wrt a particular rotation and translation, update the radius if provided
 			void applyTransformation(const Matrix22& rot, const Point& trans, double* radius = 0);
-            
+
 			//! Return a serialization of Hull
 			void serialize(std::ostream& oss) const;
 			//! Create a Hull from a string, pos corresponds to the beginning of the hull in the string
@@ -478,7 +478,7 @@ namespace Enki
 			//! Return a serialization of GroundTexture (for serialize init first = true, else first = false)
 			void serialize(std::ostream& oss) const;
 			//! Create groundTexture from a string (for deserialize init first = true, else first = false)
-			GroundTexture(const std::string& strGroundTexture, int indice);
+			GroundTexture(const std::string& strGroundTexture, int* indice);
 		};
 		
 		//! Current ground texture
