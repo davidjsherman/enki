@@ -387,9 +387,10 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 
 	SECTION("RT Thymio Init") {
 		Thymio2* thymio = random.randThymio();
-		std::ostringstream oss;
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
+			std::ostringstream oss;
+
 			thymio->serialize(oss, true);
 			
 			Thymio2* thymio1 = new Thymio2();
@@ -410,9 +411,10 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 
 	SECTION("RT Thymio Update") {
 		Thymio2* thymio = random.randThymio();
-		std::ostringstream oss;
 
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
+			std::ostringstream oss;
+
 			thymio->serialize(oss, false);
 			
 			Thymio2* thymio1 = new Thymio2();
@@ -434,9 +436,10 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 	SECTION("RT Robot Init") {
 		int robot_type = random.randInt(1, 4); // without Thymio2
 		Robot* robot = random.randRobot(robot_type);
-		std::ostringstream oss;
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
+			std::ostringstream oss;
+
 			robot->serialize(oss, true);
 			
 			Robot* robot1 = createRobot(robot_type);
@@ -458,9 +461,10 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 	SECTION("RT Robot Update") {
 		int robot_type = random.randInt(1, 4); // without Thymio2
 		Robot* robot = random.randRobot(robot_type);
-		std::ostringstream oss;
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
+			std::ostringstream oss;
+
 			robot->serialize(oss, false);
 			
 			Robot* robot1 = createRobot(robot_type);
@@ -482,9 +486,10 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 	SECTION("RT Physical Object Init") {
 		for (int i = 0; i < NB_HULL + 1; i++) {
 			PhysicalObject* po = random.randPhysicalObject(i);
-			std::ostringstream oss;
 
 			for (int i = 0; i < NB_ITERATIONS; ++i) {
+				std::ostringstream oss;
+
 				po->serialize(oss, true);
 			
 				PhysicalObject* po1 = new PhysicalObject();
@@ -506,9 +511,10 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 
 	SECTION("RT Physical Object Update") {
 		PhysicalObject* po = random.randPhysicalObject();
-		std::ostringstream oss;
 
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
+			std::ostringstream oss;
+
 			po->serialize(oss, false);
 			
 			PhysicalObject* po1 = new PhysicalObject();
