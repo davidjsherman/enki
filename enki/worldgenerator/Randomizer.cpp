@@ -27,7 +27,8 @@ Randomizer::Randomizer(World* world, const long long int &seed)
 		std::chrono::system_clock::now().time_since_epoch().count() :
 		seed;
 	this->randomEngine.seed(this->seed);
-	if (world->wallsType == World::WALLS_NONE)
+
+	if (world == NULL || world->wallsType == World::WALLS_NONE)
 	{
 		this->world = randWorld();
 	}
@@ -38,21 +39,8 @@ Randomizer::Randomizer(World* world, const long long int &seed)
 	std::cerr << "seed: " << this->seed << std::endl;
 }
 
-Randomizer::Randomizer(const long long int &seed)
-{
-	/*
-	Since c++11 you can call something like "super" constructor.
-	Using: `Randomizer(randWorld(), seed);` would be more convenient
-	but this won't work as the seed needs to be set	before any call of
-	randWorld();
-	*/
-	this->seed = seed == -1 ?
-		std::chrono::system_clock::now().time_since_epoch().count() :
-		seed;
-	this->randomEngine.seed(this->seed);
-	this->world = randWorld();
-	std::cerr << "seed: " << this->seed << std::endl;
-}
+Randomizer::Randomizer(const long long int &seed) : Randomizer(NULL, seed)
+{}
 
 Randomizer::~Randomizer()
 {
@@ -145,24 +133,27 @@ Robot* Randomizer::randRobot(int type)
 {
 	Robot* r;
 	type = type == -1 ?
-		randInt(0, NUMBER_OF_ROBOTS_TYPES - 1) :
+		randInt(1, NUMBER_OF_ROBOTS_TYPES) :
 		type;
 	switch (type)
 	{
-		case THYMIO2_:
+		case Factory::THYMIO2:
 			r = randThymio();
 			break;
-		case EPUCK_:
+		case Factory::EPUCK:
 			r = randEPuck();
 			break;
-		case SBOT_:
+		case Factory::SBOT:
 			r = randSbot();
 			break;
-		case MARXBOT_:
+		case Factory::MARXBOT:
 			r = randMarxbot();
 			break;
-		case KHEPERA_:
+		case Factory::KHEPERA:
 			r = randKhepera();
+			break;
+		default:
+			r = randThymio();
 			break;
 	}
 
@@ -261,7 +252,7 @@ PhysicalObject::Hull Randomizer::randHull(int hullSize)
 	PhysicalObject::Hull hull;
 
 	hullSize = hullSize <= 0 ?
-		randInt(1, 30) :
+		randInt(1, 15) :
 		hullSize;
 	int complex = randBool();
 	for (int i = 0; i < hullSize; i++)

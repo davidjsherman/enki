@@ -58,8 +58,8 @@ find_package(OpenGL)
 include(${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
 
-add_executable(viewhull testHull.cpp)
-target_link_libraries(viewhull worldgenerator enki enkiviewer ${OPENGL_LIBRARIES} ${QT_LIBRARIES} ${EXTRA_LIBS})
+add_executable(viewworld testGenerator.cpp)
+target_link_libraries(viewworld worldgenerator enki enkiviewer ${OPENGL_LIBRARIES} ${QT_LIBRARIES} ${EXTRA_LIBS})
 
 
 if (WIN32)

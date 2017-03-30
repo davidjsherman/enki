@@ -237,7 +237,7 @@ TEST_CASE( "UNIT Testing", "[Enki::RandomWorld.h]" ) {
 
 		for (int i = 0; i < ITERATION_NUMBER; i++)
 		{
-			PhysicalObject* obj = globalRandomizer->randPhysicalObject(0);
+			PhysicalObject* obj = globalRandomizer->randPhysicalObject();
 			REQUIRE ( obj != NULL );
 
 			if (w->wallsType == World::WALLS_SQUARE)

@@ -38,18 +38,18 @@ using namespace std;
 const double EPSILON = pow(10, -serialize_precision);
 
 static Robot* createRobot(int type)
-{	
+{
 	switch (type)
 	{
-	case Randomizer::THYMIO2_:
+	case Factory::THYMIO2:
 		return new Thymio2();
-	case Randomizer::EPUCK_:
+	case Factory::EPUCK:
 		return new EPuck();
-	case Randomizer::SBOT_:
+	case Factory::SBOT:
 		return new Sbot();
-	case Randomizer::MARXBOT_:
+	case Factory::MARXBOT:
 		return new Marxbot();
-	case Randomizer::KHEPERA_:
+	case Factory::KHEPERA:
 		return new Khepera();
 	default:
 		return new Thymio2();
@@ -89,29 +89,29 @@ static bool equalsRobots(const Robot& r1, const Robot& r2)
 			 << "angle2 = " << r2.angle << endl;
 		return false;
 	}
-	
+
 	return true;
 }
 
 static bool equalsThymio(const Thymio2& t1, const Thymio2& t2)
 {
 	equalsRobots(t1, t2);
-	
+
 	for (unsigned int i = 0; i < Thymio2::LED_COUNT; ++i) {
 		if (!equalsColor(t1.getColorLed((Thymio2::LedIndex)i),
-						 t2.getColorLed((Thymio2::LedIndex)i))) {			
+						 t2.getColorLed((Thymio2::LedIndex)i))) {
 			cerr << "[Thymio2] Not the same color : "
 				 << "color1 = " << t1.getColorLed((Thymio2::LedIndex)i) << " / "
 				 << "color2 = " << t2.getColorLed((Thymio2::LedIndex)i) << endl;
 			return false;
 		}
 	}
-	
+
 	return true;
 }
 
 static bool equalsPhysObjBase(const PhysicalObject& po1, const PhysicalObject& po2)
-{	
+{
 	if (!equalsPoint(po1.pos, po2.pos)) {
 		cerr << "[PO] Not the same position : "
 			 << "pos1 = " << po1.pos << " / "
@@ -125,7 +125,7 @@ static bool equalsPhysObjBase(const PhysicalObject& po1, const PhysicalObject& p
 			 << "angle2 = " << po2.angle << endl;
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -134,14 +134,14 @@ static bool equalsPhysObj(const PhysicalObject& po1, const PhysicalObject& po2)
 	if (!equalsPhysObjBase(po1, po2)) {
 		return false;
 	}
-	
+
 	if (!equalsColor(po1.getColor(), po2.getColor())) {
 		cerr << "[PO] Not the same color : "
 			 << "color1 = " << po1.getColor() << " / "
 			 << "color2 = " << po2.getColor() << endl;
 		return false;
 	}
-	
+
 	if (po1.isCylindric() != po2.isCylindric()) {
 		cerr << "[PO] Not the same shape : "
 			 << "po1.isCylindric() = " << po1.isCylindric() << " "
@@ -156,7 +156,7 @@ static bool equalsPhysObj(const PhysicalObject& po1, const PhysicalObject& po2)
 				 << "radius2 = " << po2.getRadius() << endl;
 			return false;
 		}
-		
+
 		if (fabs(po1.getHeight() - po2.getHeight()) > EPSILON) {
 			cerr << "[PO] Not the same height "
 			 << "height1 = " << po1.getHeight() << " "
@@ -185,7 +185,7 @@ static bool equalsPhysObj(const PhysicalObject& po1, const PhysicalObject& po2)
 					 << "size2 = " << shape2.size() << endl;
 				return false;
 			}
-			
+
 			for (size_t j = 0; j < shape1.size(); ++j) {
 				if (!equalsPoint(shape1[j], shape2[j])) {
 					cerr << "[PO] Not the same position shape: "
@@ -194,7 +194,7 @@ static bool equalsPhysObj(const PhysicalObject& po1, const PhysicalObject& po2)
 					return false;
 				}
 			}
-			
+
 			if (fabs(hull1[i].getHeight() - hull2[i].getHeight()) > EPSILON) {
 				cerr << "[PO] Not the same height size: "
 					 << "pos1 = " << hull1[i].getHeight() << " / "
@@ -212,18 +212,18 @@ static bool equalsPhysObj(const PhysicalObject& po1, const PhysicalObject& po2)
 			if (hull1[i].isTextured()) {
 				const Textures& textures1 = hull1[i].getTextures();
 				const Textures& textures2 = hull2[i].getTextures();
-				
+
 				if (textures1.size() != textures2.size()){
 					cerr << "[PO] Not the same textures size : "
 						 << "size1 = " << textures2.size() << " / "
 						 << "size2 = " << textures1.size() << endl;
 					return false;
 				}
-				
+
 				for (size_t j = 0; j < textures1.size(); ++j) {
 					Texture texture1 = textures1[j];
 					Texture texture2 = textures2[j];
-					
+
 					if (texture1.size() != texture2.size()){
 						cerr << "[PO] Not the same texture size : "
 							 << "size1 = " << texture2.size() << " / "
@@ -243,12 +243,12 @@ static bool equalsPhysObj(const PhysicalObject& po1, const PhysicalObject& po2)
 			}
 		}
 	}
-	
+
 	if (fabs(po1.getMass() - po2.getMass()) > EPSILON) {
 		cerr << "[PO] Not the same mass" << endl;
 		return false;
 	}
-	
+
 	return true;
 }
 
@@ -260,7 +260,7 @@ static bool equalsWorld(const World& w1, const World& w2)
 			 << "wallsType2 : " << w2.wallsType << endl;
 		return false;
 	}
-	
+
 	if ( (w1.h != w2.h) || (w1.w != w2.w) ) {
 		cerr << "[World] Not the same width : "
 			 << "width1 : "  << w1.w << " / "
@@ -269,14 +269,14 @@ static bool equalsWorld(const World& w1, const World& w2)
 			 << "height2 : " << w2.h << endl;
 		return false;
 	}
-	
+
 	if (w1.objects.size() != w2.objects.size()) {
 		cerr << "[World] Not the same number of objects : "
 			 << "nbObject1 : " << w1.objects.size() << " / "
 			 << "nbObject2 : " << w2.objects.size() << endl;
 		return false;
 	}
-	
+
 	for (auto& obj1 : w1.objects) {
 		for (auto& obj2 : w2.objects) {
 			if (obj1->getId() == obj2->getId()) {
@@ -373,201 +373,201 @@ TEST_CASE( "Robustness Test Serialization", "[RT Serialization/Deserialization]"
 			pos = 0;
 			Color color2 = deserialize<Color>(oss.str(), &pos);
 			REQUIRE(equalsColor(color, color2));
-			
+
 			color = color1;
 		}
 	}
 
 	SECTION("RT Thymio Init") {
 		Thymio2* thymio = random.randThymio();
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			std::ostringstream oss;
-			
+
 			serialize(thymio, oss, true);
-			
+
 			Thymio2* thymio1 = new Thymio2();
 			deserialize(thymio1, oss.str(), true);
 			REQUIRE(equalsThymio(*thymio, *thymio1));
-			
+
 			Thymio2* thymio2 = new Thymio2();
 			deserialize(thymio2, oss.str(), true);
 			REQUIRE(equalsThymio(*thymio, *thymio2));
-			
+
 			delete thymio;
 			delete thymio2;
 			thymio = thymio1;
 		}
-		
+
 		delete thymio;
 	}
 
 	SECTION("RT Thymio Update") {
 		Thymio2* thymio = random.randThymio();
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			std::ostringstream oss;
-			
+
 			serialize(thymio, oss, false);
-			
+
 			Thymio2* thymio1 = new Thymio2();
 			deserialize(thymio1, oss.str(), false);
 			REQUIRE(equalsThymio(*thymio, *thymio1));
-			
+
 			Thymio2* thymio2 = new Thymio2();
 			deserialize(thymio2, oss.str(), false);
 			REQUIRE(equalsThymio(*thymio, *thymio2));
-			
+
 			delete thymio;
 			delete thymio2;
 			thymio = thymio1;
 		}
-		
+
 		delete thymio;
 	}
-	
+
 	SECTION("RT Robot Init") {
-		int robot_type = random.randInt(1, 4); // without Thymio2
+		int robot_type = random.randInt(2, NUMBER_OF_ROBOTS_TYPES); // without Thymio2
 		Robot* robot = random.randRobot(robot_type);
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			std::ostringstream oss;
-			
+
 			serialize(robot, oss, true);
-			
+
 			Robot* robot1 = createRobot(robot_type);
 			deserialize(robot1, oss.str(), true);
 			REQUIRE(equalsRobots(*robot, *robot1));
-			
+
 			Robot* robot2 = createRobot(robot_type);
 			deserialize(robot2, oss.str(), true);
 			REQUIRE(equalsRobots(*robot, *robot2));
-			
+
 			delete robot;
 			delete robot2;
 			robot = robot1;
 		}
-		
+
 		delete robot;
 	}
 
 	SECTION("RT Robot Update") {
-		int robot_type = random.randInt(1, 4); // without Thymio2
+		int robot_type = random.randInt(2, NUMBER_OF_ROBOTS_TYPES); // without Thymio2
 		Robot* robot = random.randRobot(robot_type);
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			std::ostringstream oss;
-			
+
 			serialize(robot, oss, false);
-			
+
 			Robot* robot1 = createRobot(robot_type);
 			deserialize(robot1, oss.str(), false);
 			REQUIRE(equalsRobots(*robot, *robot1));
-			
+
 			Robot* robot2 = createRobot(robot_type);
 			deserialize(robot2, oss.str(), false);
 			REQUIRE(equalsRobots(*robot, *robot2));
-			
+
 			delete robot;
 			delete robot2;
 			robot = robot1;
 		}
-		
+
 		delete robot;
 	}
-	
+
 	SECTION("RT Physical Object Init") {
 		for (int i = 0; i < NB_HULL + 1; i++) {
 			PhysicalObject* po = random.randPhysicalObject(i);
-			
+
 			for (int i = 0; i < NB_ITERATIONS; ++i) {
 				std::ostringstream oss;
-				
+
 				serialize(po, oss, true);
-				
+
 				PhysicalObject* po1 = new PhysicalObject();
 				deserialize(po1, oss.str(), true);
 				REQUIRE(equalsPhysObj(*po, *po1));
-				
+
 				PhysicalObject* po2 = new PhysicalObject();
 				deserialize(po2, oss.str(), true);
 				REQUIRE(equalsPhysObj(*po, *po2));
-				
+
 				delete po;
 				delete po2;
 				po = po1;
 			}
-   
+
 			delete po;
 		}
 	}
-	
+
 	SECTION("RT Physical Object Update") {
 		PhysicalObject* po = random.randPhysicalObject();
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			std::ostringstream oss;
-			
+
 			serialize(po, oss, false);
-			
+
 			PhysicalObject* po1 = new PhysicalObject();
 			deserialize(po1, oss.str(), false);
 			REQUIRE(equalsPhysObjBase(*po, *po1));
-			
+
 			PhysicalObject* po2 = new PhysicalObject();
 			deserialize(po2, oss.str(), false);
 			REQUIRE(equalsPhysObjBase(*po, *po2));
-			
+
 			delete po;
 			delete po2;
 			po = po1;
 		}
-		
+
 		delete po;
 	}
-	
+
 	SECTION("RT World Init") {
 		WorldGenerator* gen = new WorldGenerator();
-		gen->add(ANYTHING_, NB_OBJECTS);
+		gen->add(WG_ANYTHING, NB_OBJECTS);
 		World* world = initWorld(serialize(gen->getWorld(), true));
 		delete gen;
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			string str = serialize(world, true);
-			
+
 			World* world1 = initWorld(str);
 			REQUIRE(equalsWorld(*world, *world1));
-			
+
 			World* world2 = initWorld(str);
 			REQUIRE(equalsWorld(*world, *world2));
-			
+
 			delete world;
 			delete world2;
 			world = world1;
 		}
 		delete world;
 	}
-	
+
 	SECTION("RT World Update") {
 		WorldGenerator* gen = new WorldGenerator();
-		gen->add(ANYTHING_, NB_OBJECTS);
+		gen->add(WG_ANYTHING, NB_OBJECTS);
 		World* world = gen->getWorld();
-		
+
 		string strInit = serialize(world, true);
 		World* world1 = initWorld(strInit);
 		World* world2 = initWorld(strInit);
-		
+
 		for (int i = 0; i < NB_ITERATIONS; ++i) {
 			gen->genStep();
-			
+
 			string strUpdate = serialize(world, false);
 			deserialize(world1, strUpdate, false);
 			REQUIRE(equalsWorld(*world, *world1));
-			
+
 			deserialize(world2, strUpdate, false);
 			REQUIRE(equalsWorld(*world, *world2));
 		}
-		
+
 		delete gen;
 		delete world1;
 		delete world2;
