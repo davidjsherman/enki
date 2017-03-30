@@ -28,6 +28,7 @@
 #include <enki/robots/s-bot/Sbot.h>
 #include <enki/robots/khepera/Khepera.h>
 #include <enki/robots/marxbot/Marxbot.h>
+#include <enki/Factory.h>
 
 /*!
 	\file Randomizer.h
@@ -49,13 +50,6 @@ namespace Enki
 	class Randomizer
 	{
 	public:
-		enum ROBOT_TYPES {
-			THYMIO2_,
-			EPUCK_,
-			SBOT_,
-			MARXBOT_,
-			KHEPERA_,
-		};
 
 	private:
 		World* world;

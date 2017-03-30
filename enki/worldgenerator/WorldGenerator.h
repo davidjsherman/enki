@@ -32,9 +32,8 @@
 namespace Enki
 {
 	// Defines may need to be removed in the future.
-	#define PHYSICAL_OBJECTS_ 5
-	#define ONLY_ROBOTS_ 6
-	#define ANYTHING_ 7
+	#define WG_ROBOTS 6
+	#define WG_ANYTHING 7
 
 	class WorldGenerator
 	{

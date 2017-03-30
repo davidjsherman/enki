@@ -59,27 +59,27 @@ namespace Enki
 			PhysicalObject* o;
 			/*
 			type can have up to 7 values :
-				0 -> 4 : Only robots (of a specified type) (enum)
-				5 : Physical Object
+				0 : Physical Object
+				1 -> 5 : Only robots (of a specified type) (enum)
 				6 : Any kind of robots
 				7 : Anything (PO / R)
 			*/
 			switch (type)
 			{
-				case Randomizer::THYMIO2_ :
-				case Randomizer::EPUCK_ :
-				case Randomizer::SBOT_ :
-				case Randomizer::MARXBOT_ :
-				case Randomizer::KHEPERA_ :
+				case Factory::THYMIO2 :
+				case Factory::EPUCK :
+				case Factory::SBOT :
+				case Factory::MARXBOT :
+				case Factory::KHEPERA :
 					o = this->randomizer->randRobot(type);
 					break;
-				case PHYSICAL_OBJECTS_ :
+				case Factory::PHYS_OBJ :
 					o = this->randomizer->randPhysicalObject();
 					break;
-				case ONLY_ROBOTS_ :
+				case WG_ROBOTS :
 					o = this->randomizer->randRobot();
 					break;
-				case ANYTHING_ :
+				case WG_ANYTHING :
 					o = this->randomizer->randObject();
 					break;
 				default:

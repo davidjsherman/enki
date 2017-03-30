@@ -21,8 +21,8 @@
 
 Enki::World* HostGui::createWorld() {
 	m_gen = new Enki::WorldGenerator();
-	m_gen->add(PHYSICAL_OBJECTS_, 30);
-	m_gen->add(ONLY_ROBOTS_, 30);
+	m_gen->add(Factory::PHYS_OBJ, 30);
+	m_gen->add(WG_ROBOTS, 30);
 	Enki::World* w = m_gen->getWorld();
 	return w;
 }
@@ -362,7 +362,7 @@ void HostGui::hostAct() {
 		m_serverStatus->setStyleSheet("font-weight:bold ; color:red");
 
 	}
-	
+
 	if(m_viewerCheck->isChecked())
 	{
 		clientViewer();
@@ -390,10 +390,10 @@ void HostGui::clientViewer(){
 	m_viewer->setAttribute(Qt::WA_DeleteOnClose);
 	// This is used to emit the destroyed() signal.
 	QObject::connect(m_viewer, SIGNAL(destroyed()), this, SLOT(clientClosed()));
-	
+
 	m_viewerStatus->setText("Running");
 	m_viewerStatus->setStyleSheet("font-weight:bold ; color:green");
-	
+
 	m_viewerCheck->setEnabled(false);
 	m_viewer->show();
 }
