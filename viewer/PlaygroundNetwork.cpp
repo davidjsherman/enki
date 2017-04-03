@@ -19,7 +19,7 @@
 
 #include <cassert>
 #include <enki/Network.h>
-#include <enki/Serialize.h>
+#include <enki/Serializer.h>
 #include <iostream>
 #include <QApplication>
 #include <QtGui>

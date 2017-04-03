@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <enki/robots/s-bot/Sbot.h>
 #include <enki/robots/marxbot/Marxbot.h>
 #include <enki/robots/khepera/Khepera.h>
-#include <enki/Serialize.h>
+#include <enki/Serializer.h>
 #include <enki/worldgenerator/WorldGenerator.h>
 
 using namespace Enki;

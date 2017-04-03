@@ -25,7 +25,7 @@
 #include <enki/robots/khepera/Khepera.h>
 #include <enki/robots/marxbot/Marxbot.h>
 
-#include <enki/Serialize.h>
+#include <enki/Serializer.h>
 #include <enki/worldgenerator/WorldGenerator.h>
 
 #define NB_ITERATIONS 20

@@ -34,7 +34,7 @@
 #include <thread>
 #include <unistd.h>
 #include <enki/Network.h>
-#include <enki/Serialize.h>
+#include <enki/Serializer.h>
 #include <QCloseEvent>
 
 #include <viewer/Viewer.h>

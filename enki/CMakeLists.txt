@@ -10,7 +10,7 @@ add_library(enki
 	PhysicalEngine.cpp
 	BluetoothBase.cpp
 	Factory.cpp
-	Serialize.cpp
+	Serializer.cpp
 	Network.cpp
 	interactions/IRSensor.cpp
 	interactions/GroundSensor.cpp

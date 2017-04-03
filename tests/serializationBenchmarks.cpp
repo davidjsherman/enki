@@ -21,7 +21,7 @@
 
 #include <enki/PhysicalEngine.h>
 #include <enki/robots/thymio2/Thymio2.h>
-#include <enki/Serialize.h>
+#include <enki/Serializer.h>
 
 const int MAX_SIZE = 40000; // bytes
 const int MAX_TIME = 20; // ms

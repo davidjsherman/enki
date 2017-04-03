@@ -23,7 +23,7 @@
 #include <cassert>
 #include <dashel/dashel.h>
 #include <enki/PhysicalEngine.h>
-#include <enki/Serialize.h>
+#include <enki/Serializer.h>
 
 /*!	\file Network.h
 	\brief Module 'Network' which can be used for sharing world instances.
