@@ -17,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "launcher.h"
+#include "Launcher.h"
 
 Enki::World* HostGui::createWorld() {
 	m_gen = new Enki::WorldGenerator();
@@ -361,13 +361,9 @@ void HostGui::hostAct() {
 		QMessageBox::critical(0, "ERROR", e.what() );
 		m_serverStatus->setText("FAILED");
 		m_serverStatus->setStyleSheet("font-weight:bold ; color:red");
-
 	}
 
-	if(m_viewerCheck->isChecked())
-	{
-		clientViewer();
-	}
+	checkAct();
 }
 
 
@@ -375,11 +371,7 @@ void HostGui::checkAct()
 {
 	// If the server isn't created or the checkbox isn't checked, don't try
 	// to run a viewer
-	if(m_viewerCheck->checkState() == Qt::Checked && !server)
-	{
-		return;
-	}
-	else
+	if(m_viewerCheck->checkState() == Qt::Checked && server)
 	{
 		clientViewer();
 	}
@@ -405,6 +397,11 @@ void HostGui::clientClosed()
 	m_viewerCheck->setEnabled(true);
 	m_viewerStatus->setText("Closed");
 	m_viewerStatus->setStyleSheet("font-weight:bold; color:black");
+
+	for(auto &obj : m_world->objects)
+	{
+		obj->userData = NULL;
+	}
 }
 
 void HostGui::displayAbout()
