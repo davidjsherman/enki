@@ -168,7 +168,7 @@ void ClientGui::lockButton()
 	else
 	{
 		m_join->setEnabled(true);
-		m_join->setToolTip("Press the button to try connecting to an enki server.");
+		m_join->setToolTip("Connect to an Enki Server.");
 	}
 }
 
@@ -221,7 +221,8 @@ void ClientGui::displayHelp()
 	"<li> IPv6 <i> example: 2001:0db8:0000:85a3:0000:0000:ac1f:8001</i> </li>"
 	"<li> domain.name <i> example: mydomain.com </i> </li>"
 	"</ul>"
-	"<p>For more informations on Internet protocols (IP) you can check <a href=\"https://en.wikipedia.org/wiki/IPv4\">wikipedia IPv4</a> or <a href=\"https://en.wikipedia.org/wiki/IPv6\">wikipedia IPv6</a>. <a href=\"https://en.wikipedia.org/wiki/Domain_name\">wikipedia domain name </a></p>";
+	"<p>For more informations on Internet protocols (IP) you can check <a href=\"https://en.wikipedia.org/wiki/IPv4\">wikipedia IPv4</a> or <a href=\"https://en.wikipedia.org/wiki/IPv6\">wikipedia IPv6</a>. <a href=\"https://en.wikipedia.org/wiki/Domain_name\">wikipedia domain name </a></p>"
+	"<p> The <b>Port</b> field should be filled with the port on which is hosted the simulation you want to join. This port is generally provided by the host of the simulation.</p>";
 	m.setText(s);
 	m.exec();
 }
@@ -243,7 +244,7 @@ HostGui::HostGui(QWidget *parent) : QMainWindow()
 	m_world = createWorld();
 
 	this->setWindowTitle("Enki Server");
-	this->setFixedSize(295, 130);
+	this->setFixedSize(315, 130);
 	this->setAttribute(Qt::WA_AlwaysShowToolTips);
 
 	QWidget *centralWidget = new QWidget;
@@ -386,7 +387,7 @@ void HostGui::checkAct()
 
 void HostGui::clientViewer(){
 	m_viewer = new Enki::ViewerWidget(m_world, 0);
-	m_viewer->setWindowTitle("Server View");
+	m_viewer->setWindowTitle(QString::fromStdString("Server View [Port: " + std::to_string(server->getPort()) + "]"));
 	m_viewer->setAttribute(Qt::WA_DeleteOnClose);
 	// This is used to emit the destroyed() signal.
 	QObject::connect(m_viewer, SIGNAL(destroyed()), this, SLOT(clientClosed()));
@@ -428,7 +429,7 @@ void HostGui::displayHelp()
 	"<p> In this section you will find all the informations you need to fill up the fields."
 	"<br/> The <b>port</b> field should be filled with the port on which you want to host the simulation."
 	"<br/> If the port field is left empty, it will be set automatically."
-	"<br/> <b>Note:</b> The port information will be displayed in the console.</p>"
+	"<br/> <b>Note:</b> The port information will be displayed in the console and in the window's title if you run an enkiviewer.</p>"
 	"<p> If checked, the checkbox \"start enkiviewer\" will start a graphical interface displaying the current hosted simulation."
 	"<br/> <b>Note:</b><i> This option is generally used when you want to host a simulation on severs without a graphic card.</i></p>";
 	m.setText(s);
