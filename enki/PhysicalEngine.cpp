@@ -642,10 +642,11 @@ namespace Enki
 		<< pos.y << TYPE_SEPARATOR;
 		
 		oss << angle << TYPE_SEPARATOR;
-		getColor().serialize(oss);
 		
 		if (first)
 		{
+			getColor().serialize(oss);
+
 			oss << isCylindric() << TYPE_SEPARATOR;
 			if (isCylindric())
 			{
@@ -672,10 +673,11 @@ namespace Enki
 		pos.y = stod(obj[position++]);
 		
 		angle = stod(obj[position++]);
-		color = Color(obj, &position);
 		
 		if (first)
 		{
+			color = Color(obj, &position);
+
 			int isCylindric = stoi(obj[position++]);
 			
 			if (isCylindric)
