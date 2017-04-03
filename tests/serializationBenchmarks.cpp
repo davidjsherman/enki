@@ -720,7 +720,7 @@ TEST_CASE( "BenchMarks Time Deserialization", "[BenchMarks Time Deserialization]
 			while (true) {
 				string strSerialization = serialize(world, false);
 				timepoint start = chrono::system_clock::now();
-                deserialize(world, strSerialization, false);
+				deserialize(world, strSerialization, false);
 				timepoint end = chrono::system_clock::now();
 				
 				if (msTime(start, end) > MAX_TIME) { break; }

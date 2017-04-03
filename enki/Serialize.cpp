@@ -188,9 +188,10 @@ namespace Enki
 
 		serialize(po->pos, os);
 		os << po->angle << TYPE_SEPARATOR;
-		serialize(po->getColor(), os);
 		if(first)
 		{
+			serialize(po->getColor(), os);
+
 			os << po->isCylindric() << TYPE_SEPARATOR;
 			if (po->isCylindric())
 			{

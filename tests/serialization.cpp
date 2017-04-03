@@ -191,7 +191,6 @@ static int checkBasePhysObject(std::vector<std::string> &string, const PhysicalO
 	indice = checkPoint(string, po.pos, indice);
 	REQUIRE ( fabs(stod(string[indice++]) - po.angle) <= EPSILON );
 
-	indice = checkColor(string, po.getColor(), indice);
 
 	return indice;
 }
@@ -199,6 +198,8 @@ static int checkBasePhysObject(std::vector<std::string> &string, const PhysicalO
 static int checkPhysicalObject(std::vector<std::string> &string, const PhysicalObject &po, int start)
 {
 	int indice = checkBasePhysObject(string, po, start);
+
+	indice = checkColor(string, po.getColor(), indice);
 
 	REQUIRE ( stoi(string[indice++]) == po.isCylindric() );
 
