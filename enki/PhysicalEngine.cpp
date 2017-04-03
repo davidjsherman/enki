@@ -1463,9 +1463,9 @@ namespace Enki
 	World::GroundTexture::GroundTexture(const std::string& strGroundTexture , int *indice)
 	{
 		std::vector<std::string> obj = split( strGroundTexture, TYPE_SEPARATOR);
-		this->height = stod(obj[*indice]); *indice += 1;
-		
 		this->width = stod(obj[*indice]); *indice += 1;
+		
+		this->height = stod(obj[*indice]); *indice += 1;
 		int nb_data = stoi(obj[*indice]); *indice += 1;
 		for (int i = 0; i < nb_data; ++i)
 		{
