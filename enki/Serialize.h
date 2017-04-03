@@ -66,13 +66,13 @@ namespace Enki
 	//! Serialize the Thymio and add the string serialization to the os
 	void serialize(Thymio2* thymio, std::ostream& os, bool first = false);
 	//! Serialize the Epuck and add the string serialization to the os
-	void serialize(EPuck* thymio, std::ostream& os, bool first = false);
+	void serialize(EPuck* epuck, std::ostream& os, bool first = false);
 	//! Serialize the Maxrbot and add the string serialization to the os
-	void serialize(Marxbot* thymio, std::ostream& os, bool first = false);
+	void serialize(Marxbot* marxbot, std::ostream& os, bool first = false);
 	//! Serialize the Sbot and add the string serialization to the os
-	void serialize(Sbot* thymio, std::ostream& os, bool first = false);
+	void serialize(Sbot* sbot, std::ostream& os, bool first = false);
 	//! Serialize the Khepra and add the string serialization to the os
-	void serialize(Khepera* thymio, std::ostream& os, bool first = false);
+	void serialize(Khepera* khepera, std::ostream& os, bool first = false);
 	//! Serialize the PhysicalObject and add the string serialization to the os
 	void serialize(PhysicalObject* po, std::ostream& os, bool first = false);
 	//! Serialize the Color and add the string serialization to the os
