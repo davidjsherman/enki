@@ -504,8 +504,8 @@ namespace Enki
 	{
 		vector<string> attrs = split(str, TYPE_SEPARATOR);
 
-		double height = stod(attrs[*pos]); *pos += 1;
 		double width = stod(attrs[*pos]); *pos += 1;
+		double height = stod(attrs[*pos]); *pos += 1;
 
 		int nb_data = stoi(attrs[*pos]); *pos += 1;
 
