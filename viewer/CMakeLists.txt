@@ -1,16 +1,11 @@
 # SDL
-find_package(SDL)
-if (SDL_FOUND)
-	include_directories(${SDL_INCLUDE_DIR})
-	set(EXTRA_LIBS ${SDL_LIBRARY} ${EXTRA_LIBS})
-	if (APPLE)
-		execute_process(COMMAND "sdl2-config" "--static-libs" OUTPUT_VARIABLE SDL2_EXTRAS)
-		string(STRIP ${SDL2_EXTRAS} SDL2_EXTRAS)
-		set(EXTRA_LIBS ${SDL2_EXTRAS} ${EXTRA_LIBS})
-	endif (APPLE)
+find_package(SDL2)
+if (SDL2_FOUND)
+	message(STATUS "SDL2 found, enabling joystick support")
+	include_directories(${SDL2_INCLUDE_DIR})
+	set(EXTRA_LIBS ${SDL2_LIBRARY} ${EXTRA_LIBS})
 	add_definitions("-DUSE_SDL")
-	message(STATUS "SDL found")
-endif (SDL_FOUND)
+endif (SDL2_FOUND)
 
 set(QT_USE_QTOPENGL TRUE)
 find_package(Qt4)
@@ -38,25 +33,19 @@ if (QT4_FOUND AND OPENGL_FOUND)
 		Thymio2Model.cpp
 		objects/Thymio2Body.cpp
 		objects/Thymio2Wheel.cpp)
-	set(viewer_test_SRCS Playground.cpp)
+	
 	
 	qt4_automoc(${viewer_lib_SRCS})
-	qt4_automoc(${viewer_test_SRCS})
-	
 	qt4_add_resources(viewer_lib_RCC_SRCS enki-viewer-textures.qrc)
 	
-	include_directories (${enki_SOURCE_DIR} ${OPENGL_INCLUDE_DIR} ${CMAKE_BINARY_DIR}/viewer)
+	include_directories (${PROJECT_SOURCE_DIR} ${OPENGL_INCLUDE_DIR} ${CMAKE_BINARY_DIR}/viewer)
 	
-	link_directories (${enki_BINARY_DIR})
+	link_directories (${PROJECT_BINARY_DIR})
 	
 	add_library (enkiviewer ${viewer_lib_SRCS} ${viewer_lib_RCC_SRCS})
 	set_target_properties(enkiviewer PROPERTIES VERSION ${LIB_VERSION_STRING} 
                                         SOVERSION ${LIB_VERSION_MAJOR})
-	target_link_libraries(enkiviewer enki ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
-
-	add_executable(enkiplayground ${viewer_test_SRCS})
-	
-	target_link_libraries(enkiplayground enkiviewer enki ${QT_LIBRARIES} ${OPENGL_LIBRARIES} ${EXTRA_LIBS})
+	target_link_libraries(enkiviewer enki ${QT_LIBRARIES})
 
 	set(ENKI_VIEWER_HDR
 		Viewer.h

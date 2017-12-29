@@ -122,6 +122,8 @@ namespace Enki
 		
 		//! Comparison operator
 		bool operator <(const Vector& that) const { if (this->x == that.x) return (this->y < that.y); else return (this->x < that.x); }
+		//! Comparison operator
+		bool operator ==(const Vector& that) const { return (this->x == that.x) && (this->y == that.y); }
 	};
 	
 	//! Print a vector to a stream
@@ -188,7 +190,7 @@ namespace Enki
 		//! Creates a diagonal matrix
 		static Matrix22 fromDiag(double _1, double _2 ) { return Matrix22(_1, 0, 0, _2); }
 		//! Create an identity matrix
-		static Matrix22 identity() { return fromDiag(1,1); }
+		static Matrix22 identity() { return fromDiag(1, 1); }
 	};
 	
 	//! A segment in a 2D space, basically two points
@@ -208,148 +210,83 @@ namespace Enki
 		Point b;
 	
 		//! Compute the distance of p to this segment
-		double dist(const Point &p) const
-		{
-			const Vector n(a.y-b.y, b.x-a.x);
-			const Vector u = n.unitary();
-			const Vector ap = p-a;
-			return ap * u;
-		}
+		double dist(const Point &p) const;
 	
 		//! Return true if o intersect this segment
-		bool doesIntersect(const Segment &o) const
-		{
-			const double s2da = dist (o.a);
-			const double s2db = dist (o.b);
-			const double s1da = o.dist (a);
-			const double s1db = o.dist (b);
-			return (s2da*s2db<0) && (s1da*s1db<0);
-		}
+		bool doesIntersect(const Segment &that, Point* intersectionPoint = 0) const;
 		
 		//! Return the middle point
-		Point getMiddlePoint() const
-		{
-			return (a + b) / 2;
-		}
+		Point getMiddlePoint() const { return (a + b) / 2; }
+		
+		//! Return a vector of the direction of the segment
+		Vector getDirection() const { return b - a; }
+		
+		//! Return whether the segment is degenerate, if a == b
+		bool isDegenerate() const { return a == b; }
 	};
 	
-	//! Polygone, which is a vector of points. Anti-clockwise, standard trigonometric orientation
+	//! Print a segment to a stream
 	/*! \ingroup an */
-	struct Polygone: public std::vector<Point>
+	std::ostream & operator << (std::ostream & outs, const Segment &segment);
+	
+	//! Polygon, which is a vector of points. Anti-clockwise, standard trigonometric orientation
+	/*! \ingroup an */
+	struct Polygon: public std::vector<Point>
 	{
 		//! Return the i-th segment
-		Segment getSegment(size_t i) const
-		{
-			return Segment((*this)[i], (*this)[(i + 1) % size()]);
-		}
+		Segment getSegment(size_t i) const;
 		
-		//! Return true if p is inside this polygone
-		bool isPointInside(const Point& p) const
-		{
-			for (size_t i = 0; i < size(); i++)
-			{
-				if (getSegment(i).dist(p) < 0)
-					return false;
-			}
-			return true;
-		}
+		//! Return true if p is inside this polygon
+		bool isPointInside(const Point& p) const;
 		
 		//! Get the axis aligned bounding box and return whether it exists
-		bool getAxisAlignedBoundingBox(Point& bottomLeft, Point& topRight) const
-		{
-			if (empty())
-				return false;
-			
-			bottomLeft = (*this)[0];
-			topRight = (*this)[0];
-			
-			extendAxisAlignedBoundingBox(bottomLeft, topRight);
-			
-			return true;
-		}
+		bool getAxisAlignedBoundingBox(Point& bottomLeft, Point& topRight) const;
 		
 		//! Extend an axis aligned bounding box with this object
-		void extendAxisAlignedBoundingBox(Point& bottomLeft, Point& topRight) const
-		{
-			for (const_iterator it = begin(); it != end(); ++it)
-			{
-				const Point& p = *it;
-				
-				if (p.x < bottomLeft.x)
-					bottomLeft.x = p.x;
-				else if (p.x > topRight.x)
-					topRight.x = p.x;
-				
-				if (p.y < bottomLeft.y)
-					bottomLeft.y = p.y;
-				else if (p.y > topRight.y)
-					topRight.y = p.y;
-			}
-		}
+		void extendAxisAlignedBoundingBox(Point& bottomLeft, Point& topRight) const;
 		
 		//! Return the bounding radius of this polygon
-		double getBoundingRadius() const
-		{
-			double radius = 0;
-			for (size_t i = 0; i < size(); i++)
-				radius = std::max<double>(radius, (*this)[i].norm());
-			return radius;
-		}
+		double getBoundingRadius() const;
 		
 		//! Translate of a specific distance
-		void translate(const Vector& delta)
-		{
-			for (iterator it = begin(); it != end(); ++it)
-				*it += delta;
-		}
+		void translate(const Vector& delta);
 		
 		//! Translate of a specific distance, overload for convenience
-		void translate(const double x, const double y)
-		{
-			translate(Vector(x,y));
-		}
+		void translate(const double x, const double y) { translate(Vector(x, y)); }
 		
 		//! Rotate by a specific angle
-		void rotate(const double angle)
-		{
-			Matrix22 rot(angle);
-			for (iterator it = begin(); it != end(); ++it)
-				*it = rot * (*it);
-		}
+		void rotate(const double angle);
 		
 		//! Flip coordinates on x
-		void flipX()
-		{
-			for (size_t i = 0; i < size(); i++)
-				(*this)[i].x = -(*this)[i].x;
-			for (size_t i = 0; i < size() / 2; i++)
-			{
-				Point p = (*this)[i];
-				(*this)[i] = (*this)[size() - i - 1];
-				(*this)[size() - i - 1] = p;
-			}
-		}
+		void flipX();
 		
 		//! Flip coordinates on y
-		void flipY()
-		{
-			for (size_t i = 0; i < size(); i++)
-				(*this)[i].y = -(*this)[i].y;
-			for (size_t i = 0; i < size() / 2; i++)
-			{
-				Point p = (*this)[i];
-				(*this)[i] = (*this)[size() - i - 1];
-				(*this)[size() - i - 1] = p;
-			}
-		}
+		void flipY();
 		
 		//! Operator to add point inline
-		Polygone& operator << (const Point& p) { push_back(p); return *this; }
+		Polygon& operator << (const Point& p) { push_back(p); return *this; }
+		
+		//! Return true and set intersection arguments (passed by reference) if this intersects circle (center, r), return false and do not change anything otherwise
+		/*!
+			\param center center of circle
+			\param r radius of circle
+			\param mtv minimum translation vector, how much to move this for de-penetration, set if intersection happens
+			\param intersectionPoint point where this touches circle, set if intersection happens
+		*/
+		bool doesIntersect(const Point& center, const double r, Vector& mtv, Point& intersectionPoint) const;
+		
+		//! Return true and set intersection arguments (passed by reference) if shape1 intersects shape2, return false and do not change anything otherwise
+		/*!
+			\param that second polygon
+			\param mtv minimum translation vector for de-penetration, how much to move this for de-penetration, set if intersection happens
+			\param intersectionPoint point where this touches that, set if intersection happens
+		*/
+		bool doesIntersect(const Polygon& that, Vector& mtv, Point& intersectionPoint) const;
 	};
 	
-	//! Print a polygone to a stream
+	//! Print a polygon to a stream
 	/*! \ingroup an */
-	std::ostream & operator << (std::ostream & outs, const Polygone &polygone);
+	std::ostream & operator << (std::ostream & outs, const Polygon &polygon);
 	
 	//! Normlize an angle to be between -PI and +PI.
 	/*! \ingroup an */
@@ -360,136 +297,6 @@ namespace Enki
 		while (angle < -M_PI)
 			angle += 2*M_PI;
 		return angle;
-	}
-	
-	#if 0
-	// NOTE: unused for now
-	//! Return the area of the triangle formed by a,b,c in mathematical order (CCW)
-	inline double getTriangleArea(const Point &a, const Point &b, const Point &c)
-	{
-		return (a.x-c.x) * (b.y-c.y) - (a.y-c.y) * (b.x-c.x);
-	}
-	#endif
-  
-	//! get the intersection point between two line segments
-	//! returns Point(HUGE_VAL, HUGE_VAL) if there's no intersection
-	//! added by yvan.bourquin@epfl.ch
-	/*! \ingroup an */
-	inline Point getIntersection(const Segment &s1, const Segment &s2)
-	{
-		// compute first segment's equation
-		const double c1 = s1.a.y + (-s1.a.x / (s1.b.x - s1.a.x)) * (s1.b.y - s1.a.y);
-		const double m1 = (s1.b.y - s1.a.y) / (s1.b.x - s1.a.x);
- 
-		// compute second segment's equation
-		const double c2 = s2.a.y + (-s2.a.x / (s2.b.x - s2.a.x)) * (s2.b.y - s2.a.y);
-		const double m2 = (s2.b.y - s2.a.y) / (s2.b.x - s2.a.x);
-
-		// are the lines parallel ?
-		if (m1 == m2)
-			return Point(HUGE_VAL, HUGE_VAL);
-
-		double x1 = s1.a.x;
-		double x2 = s1.b.x;
-		double x3 = s2.a.x;
-		double x4 = s2.b.x;
-		double y1 = s1.a.y;
-		double y2 = s1.b.y;
-		double y3 = s2.a.y;
-		double y4 = s2.b.y;
-
-		// make sure x1 < x2
-		if (x1 > x2)
-		{
-			double temp = x1;
-			x1 = x2;
-			x2 = temp;
-		}
-
-		// make sure x3 < x4
-		if (x3 > x4)
-		{
-			double temp = x3;
-			x3 = x4;
-			x4 = temp;
-		}
-
-		// make sure y1 < y2
-		if (y1 > y2)
-		{
-			double temp = y1;
-			y1 = y2;
-			y2 = temp;
-		}
-
-		// make sure y3 < y4
-		if (y3 > y4)
-		{
-			double temp = y3;
-			y3 = y4;
-			y4 = temp;
-		}
-
-		// intersection point in case of infinite slopes
-		double x;
-		double y;
-
-		// infinite slope m1
-		if (x1 == x2)
-		{
-			x = x1;
-			y = m2 * x1 + c2;
-			if (x > x3 && x < x4 && y > y1 && y <y2)
-				return Point(x, y);
-			else
-				return Point(HUGE_VAL, HUGE_VAL);
-		}
-
-		// infinite slope m2
-		if (x3 == x4)
-		{
-			x = x3;
-			y = m1 * x3 + c1;
-			if (x > x1 && x < x2 && y > y3 && y < y4)
-				return Point(x, y);
-			else
-				return Point(HUGE_VAL, HUGE_VAL);
-		}
-		
-		// compute lines intersection point
-		x = (c2 - c1) / (m1 - m2);
-
-		// see whether x in in both ranges [x1, x2] and [x3, x4]
-		if (x > x1 && x < x2 && x > x3 && x < x4)
-			return Point(x, m1 * x + c1);
-  
-		return Point(HUGE_VAL, HUGE_VAL);
-	}
-	
-	//! Returns 2 times the signed triangle area. 
-	/** positive if abc winds counter-clockwise,
-	   negative if abc winds clockwise,
-	   zero if abc is degenerate.
-	   See: Real-time collision detection, C. Ericson, Page 152 */
-	/*! \ingroup an */
-	inline double getTriangleAreaTwice(const Point &a, const Point &b, const Point &c)
-	{
-		return (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
-	}
-	
-	//! Returns signed height of triangle abc with base ab
-	/** positive if abc winds counter-clockwise
-	   negative if abc winds clockwise,
-	   zero if abc is degenerate. */
-	/*! \ingroup an */
-	inline double getTriangleHeight(const Point &a, const Point &b, const Point &c)
-	{
-		const double ba_norm = (b-a).norm();
-		if (ba_norm < std::numeric_limits<double>::epsilon())
-			return 0;
-		
-		// area of the parallelogram divided by the length of the base
-		return getTriangleAreaTwice(a, b, c) / ba_norm;
 	}
 }
 

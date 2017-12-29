@@ -46,11 +46,14 @@
 
 namespace Enki
 {
+	//switching to an std::atomic<unsigned> when in the future we switch to C++11
+	static unsigned int uidNewObject = 0;
+
 	FastRandom random;
 	
 	// PhysicalObject::Part
 	
-	PhysicalObject::Part::Part(const Polygone& shape, double height) :
+	PhysicalObject::Part::Part(const Polygon& shape, double height) :
 		height(height),
 		shape(shape)
 	{
@@ -59,7 +62,7 @@ namespace Enki
 		transformedShape.resize(shape.size());
 	}
 	
-	PhysicalObject::Part::Part(const Polygone& shape, double height, const Textures& textures) :
+	PhysicalObject::Part::Part(const Polygon& shape, double height, const Textures& textures) :
 		height(height),
 		shape(shape),
 		textures(textures)
@@ -148,7 +151,7 @@ namespace Enki
 	
 	// Hull
 	
-	Polygone PhysicalObject::Hull::getConvexHull() const
+	Polygon PhysicalObject::Hull::getConvexHull() const
 	{
 		// see http://en.wikipedia.org/wiki/Gift_wrapping_algorithm
 		// construct a vector of all points and get the left most
@@ -157,17 +160,17 @@ namespace Enki
 		Points points;
 		for (Hull::const_iterator it = begin(); it != end(); ++it)
 		{
-			const Polygone& part = it->getShape();
-			for (Polygone::const_iterator jt = part.begin(); jt != part.end(); ++jt)
+			const Polygon& part = it->getShape();
+			for (Polygon::const_iterator jt = part.begin(); jt != part.end(); ++jt)
 				points.insert(*jt);
 		}
 		
 		// do nothing for empty hulls
 		if (points.empty())
-			return Polygone();
+			return Polygon();
 		
 		//  Jarvis march/gift wrapping
-		Polygone convexHull;
+		Polygon convexHull;
 		convexHull.push_back(*points.begin());
 		points.erase(points.begin());
 		while (!points.empty())
@@ -234,7 +237,8 @@ namespace Enki
 		viscousMomentFrictionCoefficient(0.01),
 		angle(0),
 		angSpeed(0),
-		interlacedDistance(0)
+		interlacedDistance(0),
+		uid(uidNewObject++)
 	{
 		setCylindric(1, 1, 1);
 	}
@@ -510,12 +514,11 @@ namespace Enki
 
 	void PhysicalObject::initPhysicsInteractions(double dt)
 	{
-		computeTransformedShape();
-		
 		applyForces(dt);
 		
 		pos += speed * dt;
 		angle += angSpeed * dt;
+		computeTransformedShape();
 		
 		// store position after integration
 		posBeforeCollision  = pos;
@@ -551,7 +554,7 @@ namespace Enki
 		collisionEvent(0);
 	}
 
-	void PhysicalObject::collideWithObject(PhysicalObject &that, const Point &cp, const Vector &dist)
+	void PhysicalObject::collideWithObject(PhysicalObject &that, Point cp, const Vector &dist)
 	{
 		// handle infinite mass case
 		if (mass < 0)
@@ -564,9 +567,11 @@ namespace Enki
 			else
 			{
 				// if colliding with wall
-				const Vector n = dist.unitary() * -1;
-				that.collideWithStaticObject(n, cp);
+				// de-penetrate
 				that.pos -= dist;
+				that.computeTransformedShape();
+				// perform physics
+				that.collideWithStaticObject(-dist.unitary(), cp);
 				return;
 			}
 		}
@@ -575,55 +580,49 @@ namespace Enki
 			// if colliding with wall
 			if (that.mass < 0)
 			{
-				const Vector n = dist.unitary();
-				collideWithStaticObject(n, cp);
+				// de-penetrate
 				pos += dist;
+				computeTransformedShape();
+				// perform physics
+				collideWithStaticObject(dist.unitary(), cp);
 				return;
 			}
 		}
 		
-		if ((dist * speed > 0) || (dist * that.speed < 0))
-		{
-			//std::cerr << this << " Warning collideWithObject" << std::endl;
-		}
+		// calculate de-penetration vector to put that out of contact
+		const double massSum = mass + that.mass;
+		const Vector thisDisp = dist*that.mass/massSum;
+		const Vector thatDisp = -dist*mass/massSum;
+		pos += thisDisp;
+		computeTransformedShape();
+		that.pos += thatDisp;
+		that.computeTransformedShape();
+		cp += thatDisp; // we have to move cp as much as we move that because cp lie on that's boundary
 		
-		// only perform physics if we are in a physically-realistic collision situation,
-		// otherwise we experience a simulation artefact and we just deinterlace
-		//if ((dist * speed <= 0) && (dist * that.speed >= 0))
-		{
-			// point of this in inside object
-			// we use model from http://www.myphysicslab.com/collision.html
-			// this is object A, that is object B
-			const Vector n = dist.unitary();
-			
-			const Vector r_ap = (cp - pos);
-			const Vector r_bp = (cp - that.pos);
-			
-			const Vector v_ap = speed + r_ap.crossFromZVector(angSpeed);
-			const Vector v_bp = that.speed + r_bp.crossFromZVector(that.angSpeed);
-			const Vector v_ab = v_ap - v_bp;
-			
-			const double num = -(1 + collisionElasticity * that.collisionElasticity) * (v_ab * n);
-			const double denom = (1/mass) + (1/that.mass) + (r_ap.cross(n) * r_ap.cross(n)) / momentOfInertia + (r_bp.cross(n) * r_bp.cross(n)) / that.momentOfInertia;
-			const double j = num / denom;
-			
-			speed += (n * j) / mass;
-			that.speed -= (n * j) / that.mass;
-			angSpeed += r_ap.cross(n * j) / momentOfInertia;
-			that.angSpeed -= r_bp.cross(n * j) / that.momentOfInertia;
-		}
-		//else
-		//	std::cerr << "Non physics collideWithObject between " << this << " and " << &that << std::endl;
+		// Perform physics!
+		// we use model from http://www.myphysicslab.com/collision.html
+		// this is object A, that is object B
+		const Vector n = dist.unitary();
 		
-		// call the collision callback
+		const Vector r_ap = (cp - pos);
+		const Vector r_bp = (cp - that.pos);
+		
+		const Vector v_ap = speed + r_ap.crossFromZVector(angSpeed);
+		const Vector v_bp = that.speed + r_bp.crossFromZVector(that.angSpeed);
+		const Vector v_ab = v_ap - v_bp;
+		
+		const double num = -(1 + collisionElasticity * that.collisionElasticity) * (v_ab * n);
+		const double denom = (1/mass) + (1/that.mass) + (r_ap.cross(n) * r_ap.cross(n)) / momentOfInertia + (r_bp.cross(n) * r_bp.cross(n)) / that.momentOfInertia;
+		const double j = num / denom;
+		
+		speed += (n * j) / mass;
+		that.speed -= (n * j) / that.mass;
+		angSpeed += r_ap.cross(n * j) / momentOfInertia;
+		that.angSpeed -= r_bp.cross(n * j) / that.momentOfInertia;
+		
+		// call the collision callbacks
 		collisionEvent(&that);
 		that.collisionEvent(this);
-		
-		// FIXME: this is fully non physic
-		// calculate deinterlace vector to put that out of contact - mass ratios ensure physics
-		const double massSum = mass + that.mass;
-		pos += dist*that.mass/massSum;
-		that.pos -= dist*mass/massSum;
 	}
 
 	//! A functor then compares the radius of two local interactions
@@ -793,60 +792,6 @@ namespace Enki
 			wallTextures[i].resize(1, color);
 	}
 	*/
-	
-	bool World::isPointInside(const Point &p, const Point &c, const Polygone &bs, Vector *distVector)
-	// p = candidate point of object; c = pos of object; bs = bounding surface of other object; distVector = deinterlacing dist to be calculated
-	{
-		// Segment 1 from points c to d
-		const Point d = p;
-		bool intersection_found = false;
-		 
-		for (size_t i=0; i<bs.size(); i++)
-		{
-			const size_t next = (i+1)%bs.size();
-			// Segment 2 from points a to b
-			const Point a(bs[i].x, bs[i].y);
-			const Point b(bs[next].x, bs[next].y);
-			
-			// test if segments 1 and 2 overlap 
-			// see: Real-time collision detection, C. Ericson, Page 152-153
-			
-			const double a1 = getTriangleAreaTwice(a,b,d);
-			const double a2 = getTriangleAreaTwice(a,b,c);
-			
-			if (a1 * a2 < 0.0f)
-			{
-				const double a3 = getTriangleAreaTwice(c,d,a);
-				const double a4 = a3 + a2 - a1;
-				if (a3 * a4 < 0.0f)
-				{
-					// Segments 1 and 2 intersect
-					intersection_found = true;
-					
-					const double dist = getTriangleHeight(a,b,d); // TODO: abs necessary?
-					
-					if (dist < 0)
-					{
-						// both c and p are outside bs
-						// the intersection can be handled when checking the points of bs					
-						return false; 
-					}
-					
-					Vector n = (b-a).perp().unitary();			
-					*distVector = n * (-dist); // TODO: ok that we modify this even if we might return false??						
-					/*
-						std::cout << "Hull: " << bs << std::endl;
-						std::cout << "i: " << i << std::endl;
-						std::cout << "next: " << next << std::endl;						
-						std::cout << "p: " << p  << std::endl;
-						std::cout << "c: " << c  << std::endl;	
-						assert(false);					
-					*/
-				}
-			}
-		}
-		return intersection_found;
-	}
 
 	void World::collideWithSquareWalls(PhysicalObject *object)
 	{
@@ -882,7 +827,7 @@ namespace Enki
 			// iterate over all shapes
 			for (PhysicalObject::Hull::const_iterator it = object->hull.begin(); it != object->hull.end(); ++it)
 			{
-				const Polygone& shape = it->getTransformedShape();
+				const Polygon& shape = it->getTransformedShape();
 				
 				// let's assume walls are infinite
 				Point cp1, cp2; // cp1 is on x, cp2 is on y
@@ -957,6 +902,7 @@ namespace Enki
 				const Vector dirU = object->pos.unitary();
 				object->collideWithStaticObject(-dirU, dirU * r);
 				object->pos += dirU * distToWall;
+				object->computeTransformedShape();
 			}
 		}
 		else
@@ -964,7 +910,7 @@ namespace Enki
 			// iterate over all shapes
 			for (PhysicalObject::Hull::const_iterator it = object->hull.begin(); it != object->hull.end(); ++it)
 			{
-				const Polygone& shape = it->getTransformedShape();
+				const Polygon& shape = it->getTransformedShape();
 				Point cp;
 				double dist = 0;
 				for (size_t i=0; i<shape.size(); i++)
@@ -984,66 +930,10 @@ namespace Enki
 					const Vector dirU = cp.unitary();
 					object->collideWithStaticObject(-dirU, dirU * r);
 					object->pos -= dirU * dist;
+					object->computeTransformedShape();
 				}
 			}
 			// TODO: verify this code
-		}
-	}
-	
-	void World::collideCircleWithShape(PhysicalObject *circularObject, PhysicalObject *shapedObject, const Polygone &shape)
-	{
-		// test if circularObject is inside a shape
-		for (unsigned i=0; i<shape.size(); i++)
-		{
-			const size_t next=(i+1)%shape.size();
-			const Segment s(shape[i].x, shape[i].y, shape[next].x, shape[next].y);
-
-			const Vector nn(s.a.y-s.b.y, s.b.x-s.a.x);	//orthog. vector
-			const Vector u = nn.unitary();
-
-			const double d = (circularObject->pos-s.a)*u;
-			// if we are inside the circularObject
-			if ((d<0) && (-d<circularObject->r))
-			{
-				const Point proj = circularObject->pos - u*d;
-
-				if ((((proj-s.a)*(s.b-s.a))>0) && (((proj-s.b)*(s.a-s.b))>0))
-				{
-					// if there is a segment which is inside the circularObject, and the projection of the center lies within this segment, this projection is the nearest point. So we return. This is a consequence of having convexe polygones.
-					const Vector dist = u*-(circularObject->r+d);
-					const Point collisionPoint = circularObject->pos - u*(d);
-					circularObject->collideWithObject(*shapedObject, collisionPoint, dist);
-					return;
-				}
-			}
-		}
-
-		const double r2 = circularObject->r * circularObject->r;
-		double pointInsideD2 = r2;
-		Point pointInside;
-		Vector centerToPointInside;
-		
-		// test if there is vertex of shape is inside the circularObject. If so, take the closest to the center
-		for (unsigned i=0; i<shape.size(); i++)
-		{
-			const Point &candidate = shape[i];
-			const Vector centerToPoint = candidate - circularObject->pos;
-			const double d2 = centerToPoint.norm2();
-			if (d2 < pointInsideD2)
-			{
-				pointInsideD2 = d2;
-				pointInside = candidate;
-				centerToPointInside = centerToPoint;
-			}
-		}
-
-		// we get a collision, one point of shape is inside the circularObject
-		if (pointInsideD2 < r2)
-		{
-			const double pointInsideDist = sqrt(pointInsideD2);
-			const Vector dist = (centerToPointInside / pointInsideDist) * (circularObject->r - pointInsideDist);
-			const Point collisionPoint = pointInside + dist;
-			shapedObject->collideWithObject(*circularObject, collisionPoint, dist);
 		}
 	}
 
@@ -1055,11 +945,11 @@ namespace Enki
 		if (distOCtoOC.norm2() > (addedRay*addedRay))
 			return;
 
-		Vector dist, trueDist;
-		PhysicalObject *o1, *o2;
-		o1 = o2 = NULL;
-		Point collisionPoint;
+		// variables for finding parts of maximum penetration
+		PhysicalObject *o1 = NULL, *o2 = NULL;
 		double maxNorm = 0;
+		Vector maxMtv;
+		Point collisionPoint;
 
 		// for each point of object 1, look if it is in object2
 		if (!object1->hull.empty())
@@ -1069,44 +959,21 @@ namespace Enki
 				// iterate on all shapes of both objects
 				for (PhysicalObject::Hull::const_iterator it = object1->hull.begin(); it != object1->hull.end(); ++it)
 				{
-					const Point& shape1Centroid = it->getTransformedCentroid();
-					const Polygone& shape1 = it->getTransformedShape();
+					const Polygon& shape1 = it->getTransformedShape();
 					for (PhysicalObject::Hull::const_iterator jt = object2->hull.begin(); jt != object2->hull.end(); ++jt)
 					{
-						const Point& shape2Centroid = jt->getTransformedCentroid();
-						const Polygone& shape2 = jt->getTransformedShape();
-						// TODO: move this into a polygone collision function
-						
-						// look in both directions
-						for (size_t i = 0; i < shape1.size(); i++)
+						const Polygon& shape2 = jt->getTransformedShape();
+						Vector mtv, cp;
+						if (shape1.doesIntersect(shape2, mtv, cp))
 						{
-							const Point &candidate = shape1[i];
-							if (isPointInside(candidate, shape1Centroid, shape2, &dist))
+							const double mtvNorm(mtv.norm2());
+							if (mtvNorm > maxNorm)
 							{
-								if (dist.norm2() > maxNorm)
-								{
-									maxNorm = dist.norm2();
-									o1 = object1;
-									o2 = object2;
-									collisionPoint = candidate + dist;
-									trueDist = dist;
-								}
-							}
-						}
-						
-						for (size_t i=0; i < shape2.size(); i++)
-						{
-							const Point &candidate = shape2[i];
-							if (isPointInside(candidate, shape2Centroid, shape1, &dist))
-							{
-								if (dist.norm2() > maxNorm)
-								{
-									maxNorm = dist.norm2();
-									o2 = object1;
-									o1 = object2;
-									collisionPoint = candidate + dist;
-									trueDist = dist;
-								}
+								maxNorm = mtvNorm;
+								maxMtv = mtv;
+								collisionPoint = cp;
+								o1 = object1;
+								o2 = object2;
 							}
 						}
 					}
@@ -1116,27 +983,53 @@ namespace Enki
 			{
 				// collide circle 2 on shape 1
 				for (PhysicalObject::Hull::const_iterator it = object1->hull.begin(); it != object1->hull.end(); ++it)
-					collideCircleWithShape(object2, object1, it->getTransformedShape());
-				return;
+				{
+					Vector mtv, cp;
+					if (it->getTransformedShape().doesIntersect(object2->pos, object2->r, mtv, cp))
+					{
+						const double mtvNorm(mtv.norm2());
+						if (mtvNorm > maxNorm)
+						{
+							maxNorm = mtvNorm;
+							maxMtv = mtv;
+							collisionPoint = cp;
+							o1 = object1;
+							o2 = object2;
+						}
+					}
+				}
 			}
 		}
 		else if (!object2->hull.empty())
 		{
 			// collide circle 1 on shape 2
 			for (PhysicalObject::Hull::const_iterator jt = object2->hull.begin(); jt != object2->hull.end(); ++jt)
-				collideCircleWithShape(object1, object2, jt->getTransformedShape());
-			return;
+			{
+				Vector mtv, cp;
+				if (jt->getTransformedShape().doesIntersect(object1->pos, object1->r, mtv, cp))
+				{
+					const double mtvNorm(mtv.norm2());
+					if (mtvNorm > maxNorm)
+					{
+						maxNorm = mtvNorm;
+						maxMtv = mtv;
+						collisionPoint = cp;
+						o1 = object2;
+						o2 = object1;
+					}
+				}
+			}
 		}
 		else
 		{
 			// collide 2 circles
 			const Vector ud = distOCtoOC.unitary();
 			const double dLength = distOCtoOC.norm();
-			dist = ud * (addedRay-dLength);
+			maxNorm = addedRay-dLength;
+			maxMtv = ud * maxNorm;
 			collisionPoint = object2->pos + ud * object2->r;
-			
-			object1->collideWithObject(*object2, collisionPoint, dist);
-			return;
+			o1 = object1;
+			o2 = object2;
 		}
 
 		// if collision
@@ -1144,7 +1037,7 @@ namespace Enki
 		{
 			assert(o1);
 			assert(o2);
-			o1->collideWithObject(*o2, collisionPoint, trueDist);
+			o1->collideWithObject(*o2, collisionPoint, maxMtv);
 		}
 	}
 

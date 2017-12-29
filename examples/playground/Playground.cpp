@@ -31,7 +31,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "Viewer.h"
+#include <viewer/Viewer.h>
 #include <enki/PhysicalEngine.h>
 #include <enki/robots/e-puck/EPuck.h>
 #include <enki/robots/marxbot/Marxbot.h>
@@ -117,7 +117,7 @@ public:
 			const double amount = 9;
 			const double radius = 5;
 			const double height = 20;
-			Polygone p;
+			Enki::Polygon p;
 			for (double a = 0; a < 2*M_PI; a += 2*M_PI/amount)
 				p.push_back(Point(radius * cos(a), radius * sin(a)));
 			
@@ -129,7 +129,7 @@ public:
 			world->addObject(o);
 		}
 		
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < 10; i++)
 		{
 			PhysicalObject* o = new PhysicalObject;
 			o->pos = Point(UniformRand(20, 100)(), UniformRand(20, 100)());
@@ -139,7 +139,7 @@ public:
 			world->addObject(o);
 		}
 		
-		Polygone p2;
+		Enki::Polygon p2;
 		p2.push_back(Point(5,1));
 		p2.push_back(Point(-5,1));
 		p2.push_back(Point(-5,-1));
@@ -159,8 +159,8 @@ public:
 		{
 			PhysicalObject* o = new PhysicalObject;
 			PhysicalObject::Hull hull;
-			hull.push_back(Enki::PhysicalObject::Part(Polygone() << Point(5,1) << Point(-5,1) << Point(-5,-1) << Point(5,-1), 2));
-			hull.push_back(Enki::PhysicalObject::Part(Polygone() << Point(1,5) << Point(-1,5) << Point(-1,-5) << Point(1,-5), 4));
+			hull.push_back(Enki::PhysicalObject::Part(Enki::Polygon() << Point(5,1) << Point(-5,1) << Point(-5,-1) << Point(5,-1), 2));
+			hull.push_back(Enki::PhysicalObject::Part(Enki::Polygon() << Point(1,5) << Point(-1,5) << Point(-1,-5) << Point(1,-5), 4));
 			o->setCustomHull(hull, 60);
 			o->setColor(Color(0.2, 0.4, 0.6));
 			o->collisionElasticity = 0.2;
@@ -185,11 +185,15 @@ public:
 		addDefaultsRobots(world);
 		#endif // PROBLEM_LONE_EPUCK
 		
+		#define PROBLEM_MARXBOT
+		
+		#ifdef PROBLEM_MARXBOT
 		Marxbot *marxbot = new Marxbot;
 		marxbot->pos = Point(60, 50);
 		marxbot->leftSpeed = 8;
 		marxbot->rightSpeed = 2;
 		world->addObject(marxbot);
+		#endif // PROBLEM_MARXBOT
 		
 		#ifdef USE_SDL
 		if((SDL_Init(SDL_INIT_JOYSTICK)==-1))
@@ -226,8 +230,6 @@ public:
 		#else // USE_SDL
 		addDefaultsRobots(world);
 		#endif // USE_SDL
-		camera.altitude = 150;
-		camera.pos = QPointF(0,-60);
 	}
 	
 	void addDefaultsRobots(World *world)

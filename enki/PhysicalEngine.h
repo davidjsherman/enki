@@ -191,9 +191,9 @@ namespace Enki
 		{
 		public:
 			//! Constructor, builds a shaped part without any texture; shape must be closed and convex.
-			Part(const Polygone& shape, double height);
+			Part(const Polygon& shape, double height);
 			//! Constructor, builds a shaped part with a textured shape; shape must be closed and convex.
-			Part(const Polygone& shape, double height, const Textures& textures);
+			Part(const Polygon& shape, double height, const Textures& textures);
 			//! Constructor, builds a rectangular part of size l1xl2, with a given height and color, and update radius
 			Part(double l1, double l2, double height);
 			
@@ -203,8 +203,8 @@ namespace Enki
 			// getters
 			inline double getHeight() const { return height; }
 			inline double getArea() const { return area; }
-			inline const Polygone& getShape() const { return shape; }
-			inline const Polygone& getTransformedShape() const { return transformedShape; }
+			inline const Polygon& getShape() const { return shape; }
+			inline const Polygon& getTransformedShape() const { return transformedShape; }
 			inline const Point& getCentroid() const { return centroid; }
 			inline const Point& getTransformedCentroid() const { return transformedCentroid; }
 			inline const Textures& getTextures() const { return textures; }
@@ -219,9 +219,9 @@ namespace Enki
 			//! The area of this part
 			double area;
 			//! The shape of the part in object coordinates.
-			Polygone shape;
+			Polygon shape;
 			//! The shape of the part in world coordinates, updated on initPhysicsInteractions().
-			Polygone transformedShape;
+			Polygon transformedShape;
 			//! The centroid (barycenter) of the part in object coordinates.
 			Point centroid;
 			//! The centroid (barycenter) of the part in world coordinates, updated on initPhysicsInteractions().
@@ -247,7 +247,7 @@ namespace Enki
 			//! Construct a hull with a single part
 			Hull(const Part& part) : std::vector<Part>(1, part) {}
 			//! Return the convex hull of this hull, using a simple Jarvis march/gift wrapping algorithm
-			Polygone getConvexHull() const;
+			Polygon getConvexHull() const;
 			//! Add this hull to another one
 			Hull operator+(const Hull& that) const;
 			//! Add this hull to another one
@@ -313,14 +313,17 @@ namespace Enki
 		//! Set the overall color of this object, if hull is empty or if it does not contain any texture
 		void setColor(const Color &color);
 
-		enum ButtonCode
+		//! A struct with bitfields for buttons
+		enum MouseButtonCode
 		{
-			LEFT_MOUSE_BUTTON = 1<<0,
-			RIGHT_MOUSE_BUTTON = 1<<1,
-			MIDDLE_MOUSE_BUTTON = 1<<3
+			MOUSE_BUTTON_LEFT = 0,
+			MOUSE_BUTTON_RIGHT = 1,
+			MOUSE_BUTTON_MIDDLE = 2
 		};
-		//! called for robot if a click is performed on it
-		virtual void clickedInteraction(bool pressed, unsigned int buttonCode, double pointX, double pointY, double pointZ){};
+		//! Called for robot if a mouse button is pressed while pointing to it, point is given in relative coordinates
+		virtual void mousePressEvent(unsigned button, double pointX, double pointY, double pointZ) {};
+		//! Called for a robot if a previously mouse button was pressed and is now released
+		virtual void mouseReleaseEvent(unsigned button) {};
 		
 	private:		// setup methods
 		
@@ -370,8 +373,14 @@ namespace Enki
 		
 		//! Dynamics for collision with a static object at points cp with normal vector n
 		void collideWithStaticObject(const Vector &n, const Point &cp);
-		//! Dynamics for collision with that at point cp with a penetrated distance of dist.
-		void collideWithObject(PhysicalObject &that, const Point &cp, const Vector &dist);
+		//! Dynamics for collision with that at point cp (on that) with a penetrated distance of dist,
+		void collideWithObject(PhysicalObject &that, Point cp, const Vector &dist);
+
+	public:
+		//! ID is used when sharing a world over the network where it should be
+		//! possible to associate client objects with their corresponding ones on
+		//! the server even if they don't have the same pointer address.
+		unsigned int uid;
 	};
 
 	//! A robot is a PhysicalObject that has additional interactions and a controller.
@@ -464,16 +473,12 @@ namespace Enki
 		BluetoothBase* bluetoothBase;
 
 	protected:
-		//! Do the collision of a circular object with one with a different shape (convex boundingsurface)
-		void collideCircleWithShape(PhysicalObject *circularObject, PhysicalObject *shapedObject, const Polygone &shape);
 		//! Collide two objects. Correct functions will be called depending on type of object (circular or other shape).
 		void collideObjects(PhysicalObject *object1, PhysicalObject *object2);
 		//! Collide the object with square walls.
 		void collideWithSquareWalls(PhysicalObject *object);
 		//! Collide the object with circular walls.
 		void collideWithCircularWalls(PhysicalObject *object);
-		//! Return true if point p of object of center c is inside polygone bs and return deinterlacement distVector.
-		bool isPointInside(const Point &p, const Point &c, const Polygone &bs, Vector *distVector);
 
 	public:
 		//! Construct a world with square walls, takes width and height of the world arena in cm.
