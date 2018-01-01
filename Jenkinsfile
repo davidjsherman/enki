@@ -8,8 +8,7 @@ pipeline {
 	stages {
 		stage('Prepare') {
 			steps {
-				// checkout scm -- done automatically
-				stash includes: 'enki/**', excludes: '.git', name: 'source'
+				checkout scm
 			}
 		}
 		stage('Compile') {
@@ -19,7 +18,6 @@ pipeline {
 						label 'debian'
 					}
 					steps {
-						unstash 'source'
 						script {
 							env.debian_python = sh ( script: '''
 									python -c "import sys; print 'lib/python'+str(sys.version_info[0])+'.'+str(sys.version_info[1])+'/dist-packages'"
@@ -36,7 +34,6 @@ pipeline {
 						label 'macos'
 					}
 					steps {
-						unstash 'source'
 						CMake([label: 'macos'])
 						stash includes: 'dist/**', name: 'dist-macos'
 					}
@@ -46,7 +43,6 @@ pipeline {
 						label 'windows'
 					}
 					steps {
-						unstash 'source'
 						CMake([label: 'windows'])
 						stash includes: 'dist/**', name: 'dist-windows'
 					}
@@ -81,12 +77,12 @@ pipeline {
 						label 'debian'
 					}
 					steps {
-						unstash 'dist-debian'
-						unstash 'source'
-						dir('enki') {
-							sh 'which debuild && debuild -i -us -uc -b'
+						dir('build/debian/package') {
+							// We must rebuild in a subdirectory to prevent debuild from polluting the workspace parent
+							sh 'git clone --depth 1 --single-branch $GIT_URL'
+							sh '(cd enki && which debuild && debuild -i -us -uc -b)'
+							sh 'mv libenki*.deb libenki*.changes libenki*.build $WORKSPACE/dist/debian/'
 						}
-						sh 'mv libenki*.deb libenki*.changes libenki*.build dist/debian/'
 						stash includes: 'dist/**', name: 'dist-debian'
 					}
 				}
